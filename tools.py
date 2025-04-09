@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from io import BytesIO
 import pdfplumber
+import yaml
 
 from langchain_core.tools import tool
 from langchain_openai import OpenAIEmbeddings
@@ -17,9 +18,13 @@ class Tools():
             return None
 
 
+        # ----- Execution Team Tools -----
         @tool
         def website_info_retriever(query: str) -> str:
             """Based on user's query perform RAG retrieval on the website information database."""
+            print(f"Query: {query}")
+            print("---")
+
             vectorstore = Chroma(
                 embedding_function=OpenAIEmbeddings(),
                 collection_name="ncu_office_websites",
@@ -35,7 +40,7 @@ class Tools():
                 page_content = docs[i].page_content
 
                 print("link: ", link)
-                print("page_content: ", page_content)
+                print("page_content: \n", page_content)
                 result += "link: " + link + "\n" + page_content + "\n"
             
             return result
@@ -59,7 +64,7 @@ class Tools():
             if response.status_code == 200:
                 page_content = response.text
                 soup = BeautifulSoup(page_content, 'html.parser')
-                links = soup.find_all('a') # 找出所有超連結 # todo 讀取iframe有問題
+                links = soup.find_all('a') # 找出所有超連結 # TODO 讀取iframe有問題
 
                 for link in links:
                     title = link.get_text(strip=True)  # 提取連結的文字作為標題
@@ -98,13 +103,13 @@ class Tools():
                             print(f"無法獲取[{title}]: [{final_url}] ，不加入資料中。錯誤: {e}")
 
                 print(f"成功獲取 [{url}] 中共{len(websites)}個連結。")
+
                 result = "\n".join([f"[{item['title']}]: [{item['link']}]" for item in websites])
+                print(result)
+                return result
             else:
                 print(f"無法獲取 [{url}] 。HTTP 狀態碼: {response.status_code}")
                 return f"無法獲取 [{url}] 。HTTP 狀態碼: {response.status_code}"
-            
-            print(result)
-            return result
         
         @tool
         def website_reader(url: str) -> str:
@@ -123,7 +128,6 @@ class Tools():
 
             cleaned_content = "\n".join([line for line in content.split("\n") if line.strip()])
             print(cleaned_content)
-
             return cleaned_content
 
         @tool
@@ -138,7 +142,7 @@ class Tools():
                 return f"無法獲取網頁。錯誤: {e}"
 
             if response.status_code == 200:
-                pdf_file = BytesIO(response.content)  # 使用 BytesIO 將下載的內容轉為二進制流
+                pdf_file = BytesIO(response.content)
                 
                 with pdfplumber.open(pdf_file) as pdf:
                     pdf_text = ""
@@ -150,20 +154,59 @@ class Tools():
             else:
                 print(f"下載失敗，HTTP 狀態碼: {response.status_code}")
                 return f"下載失敗，HTTP 狀態碼: {response.status_code}"
+        
+
+
+        # ----- Evaluation Team Tools -----
+        CHAT_LOG_FILEPATH = "Docs/chat_log_archive.txt"
+
+        @tool
+        def read_user_input_and_plan() -> str:
+            """Read user input and plan."""
+            with open(CHAT_LOG_FILEPATH, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                extracted_lines = lines[0:5] # 提取指定範圍的行
+            return ''.join(extracted_lines)
+
+        @tool
+        def read_execution_chat_log() -> str:
+            """Read the chat log of execution team."""
+            with open(CHAT_LOG_FILEPATH, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                extracted_lines = lines[6:] # 提取指定範圍的行
+            # with open("chat_log.txt", "r", encoding="utf-8") as f:
+            #     content = f.read()
+            return ''.join(extracted_lines)
+        
+        @tool
+        def read_execution_team_agents_prompt() -> str:
+            """Read the agents prompt of execution team."""
+            with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
+                agents_parameter = yaml.safe_load(f)
+            
+            for agent in agents_parameter:
+                print(agent + " Prompt:")
+                print(agents_parameter[agent]["prompt"])
+                print()
+
+
 
         self.tool_dict = {
             "none": none,
             "website_info_retriever": website_info_retriever,
             "website_links_crawler": website_links_crawler,
             "website_reader": website_reader,
-            "pdf_reader": pdf_reader
+            "pdf_reader": pdf_reader,
+            "read_user_input_and_plan": read_user_input_and_plan,
+            "read_execution_chat_log": read_execution_chat_log,
+            "read_execution_team_agents_prompt": read_execution_team_agents_prompt,
         }
 
-
+        
 
 # -----tool testing field-----
 
-tools = Tools()
+# tools = Tools()
 
 # import os
 # from dotenv import load_dotenv
@@ -177,7 +220,7 @@ tools = Tools()
 # response = website_info_retriever.invoke("請幫我找學務處最新消息")
 # print(response)
 
-website_links_crawler = tools.tool_dict["website_links_crawler"]
-print(website_links_crawler)
-response = website_links_crawler.invoke("https://www.ncu.edu.tw/tw/index.html")
-print(response)
+# website_links_crawler = tools.tool_dict["website_links_crawler"]
+# print(website_links_crawler)
+# response = website_links_crawler.invoke("https://www.ncu.edu.tw/tw/index.html")
+# print(response)

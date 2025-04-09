@@ -1,26 +1,14 @@
-from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
-from langchain_core.tools import tool
+from tools import Tools
 
-@tool
-def website_info_retriever(query: str) -> str:
-    """Perform RAG retrieval on the website database."""
-    vectorstore = Chroma(
-        embedding_function=OpenAIEmbeddings(),
-        collection_name="ncu_office_websites",
-        persist_directory="Parse Websites v2/ncu_office_websites"
-    )
+tools = Tools()
+tool_dict = tools.tool_dict
 
-    website_retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 10})
-    docs = website_retriever.invoke(query)
+# agents_prompt_content = tool_dict["read_execution_team_agents_prompt"].invoke(input=None)
+# print(agents_prompt_content)
 
-    result = ""
-    for i in range(len(docs)):
-        link = docs[i].metadata.get("link")
-        page_content = docs[i].page_content
+# user_input_and_plan_content = tool_dict["read_user_input_and_plan"].invoke(input=None)
+# print(user_input_and_plan_content)
 
-        print("link: ", link)
-        print("page_content: ", page_content)
-        result += "link: " + link + "\n" + page_content + "\n"
-    
-    return result
+execution_chat_log_content = tool_dict["read_execution_chat_log"].invoke(input=None)
+for i in range(0, len(execution_chat_log_content), 1000):
+    print(execution_chat_log_content[i:i+1000])
