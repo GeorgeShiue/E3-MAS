@@ -1,6 +1,4 @@
-import os
 import yaml
-from dotenv import load_dotenv
 from typing import Union, List
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,11 +7,6 @@ from langgraph.prebuilt import create_react_agent
 
 from tools import Tools
 
-
-# Load api key from .env file
-load_dotenv()
-api_key = os.getenv("API_KEY")
-os.environ["OPENAI_API_KEY"] = api_key
 
 
 # Initialize the tools
@@ -91,10 +84,10 @@ planner_prompt = ChatPromptTemplate.from_messages(
 
 planner = planner_prompt | planner_llm.with_structured_output(Plan) # 限制使用特定模板回答問題
 
-print("planner_llm_config:")
-for key, value in planner_llm_config.items():
-    print(f"{key}: {value}")
-print("planner_system_prompt: \n" + planner_system_prompt)
+# print("planner_llm_config:")
+# for key, value in planner_llm_config.items():
+#     print(f"{key}: {value}")
+# print("planner_system_prompt: \n" + planner_system_prompt)
 
 # Define Executor Agent
 # * Executor Agent 因為需要取用工具所以使用 create_react_agent() 實現
@@ -110,8 +103,8 @@ replanner_prompt = ChatPromptTemplate.from_template(replanner_system_prompt)
 
 replanner = replanner_prompt | replanner_llm.with_structured_output(Act) # 限制使用特定模板回答問題
 
-print("replanner_model: " + replanner_model)
-print("replanner_prompt: \n" + replanner_system_prompt)
+# print("replanner_model: " + replanner_model)
+# print("replanner_prompt: \n" + replanner_system_prompt)
 
 # Define Solver Agent
 # * Solver Agent 使用 ChatPromptTemplate.from_template() 實現
@@ -123,12 +116,12 @@ solver_prompt = ChatPromptTemplate.from_template(solver_system_prompt)
 
 solver = solver_prompt | solver_llm
 
-print("solver_model: " + solver_model)
-print("solver_system_prompt: \n" + solver_system_prompt)
+# print("solver_model: " + solver_model)
+# print("solver_system_prompt: \n" + solver_system_prompt)
 
 
-# Define Critic Agent
-critic = create_react_agent_with_yaml("Critic")
+# # Define Critic Agent
+# critic = create_react_agent_with_yaml("Critic")
 
-# Define Evaluator Agent
-evaluator = create_react_agent_with_yaml("Evaluator")
+# # Define Evaluator Agent
+# evaluator = create_react_agent_with_yaml("Evaluator")

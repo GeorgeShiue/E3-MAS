@@ -1,0 +1,162 @@
+Evaluation Query:
+Please evaluate the performance of execution team.
+
+critic:
+rubric: Here is the structured evaluation rubric for the multi-step plan to find the headmaster of National Central University in Taiwan:
+
+### Step 1: Search the internal website database
+1. **Step Objective**: Identify the most relevant website that likely contains information about the headmaster.
+2. **Linked Requirements**: Requirement to find authoritative and relevant sources of information.
+3. **Expected Input/Output**: Input: User query; Output: URL of the most relevant website.
+4. **Evaluation Criteria**:
+   - Accuracy of the selected URL (does it lead to a relevant source?)
+   - Completeness of the search (are all potential sources considered?)
+   - Tool appropriateness (is the internal database the right tool for this task?)
+5. **Failure Indicators**: 
+   - The URL does not lead to a relevant page.
+   - No URL is returned.
+   - The search does not consider multiple potential sources.
+6. **Preference Alignment**: Supports the preference for using authoritative sources.
+7. **Fallback Evaluation Rules**: If a similar search step is introduced later, evaluate based on the relevance and authority of the new source.
+
+---
+
+### Step 2: Read the content of the selected site
+1. **Step Objective**: Understand the information provided about the headmaster from the selected site.
+2. **Linked Requirements**: Requirement to gather detailed information about the headmaster.
+3. **Expected Input/Output**: Input: URL from Step 1; Output: Page content.
+4. **Evaluation Criteria**:
+   - Completeness of the content (does it cover all necessary aspects of the headmaster's information?)
+   - Clarity of the information (is the information presented in an understandable manner?)
+   - Relevance to the user query (is the content directly related to the headmaster?)
+5. **Failure Indicators**: 
+   - The content is irrelevant or off-topic.
+   - The content is too vague or incomplete.
+   - No content is retrieved.
+6. **Preference Alignment**: Aligns with the preference for detailed and clear information.
+7. **Fallback Evaluation Rules**: If a similar reading step is introduced later, prioritize clarity and relevance of the new content.
+
+---
+
+### Step 3: Evaluate content sufficiency
+1. **Step Objective**: Assess whether the information gathered is sufficient to identify the headmaster.
+2. **Linked Requirements**: Requirement to confirm the adequacy of information.
+3. **Expected Input/Output**: Input: Content from Step 2; Output: Assessment of sufficiency.
+4. **Evaluation Criteria**:
+   - Accuracy of the assessment (is the evaluation correctly identifying sufficiency?)
+   - Completeness of the evaluation (does it consider all necessary information?)
+5. **Failure Indicators**: 
+   - The assessment incorrectly states the information is sufficient when it is not.
+   - The evaluation lacks depth or fails to consider key details.
+6. **Preference Alignment**: Supports the preference for thorough evaluation before proceeding.
+7. **Fallback Evaluation Rules**: If a similar evaluation step is introduced later, ensure it maintains the same rigor in assessing sufficiency.
+
+---
+
+### Step 4: Identify relevant in-page links
+1. **Step Objective**: Find additional links that may lead to more information about the headmaster.
+2. **Linked Requirements**: Requirement to explore further sources if initial information is insufficient.
+3. **Expected Input/Output**: Input: Content from Step 2; Output: List of relevant hyperlinks.
+4. **Evaluation Criteria**:
+   - Relevance of the identified links (do they lead to pertinent information?)
+   - Completeness of the list (are all potential links considered?)
+5. **Failure Indicators**: 
+   - No relevant links are identified.
+   - The links do not lead to additional useful information.
+6. **Preference Alignment**: Supports the preference for thorough exploration of available resources.
+7. **Fallback Evaluation Rules**: If similar steps are introduced later, evaluate based on the relevance and potential of the new links.
+
+---
+
+### Step 5: Repeat content reading for new hyperlink
+1. **Step Objective**: Gather information from a new page if the previous content was insufficient.
+2. **Linked Requirements**: Requirement to ensure comprehensive information gathering.
+3. **Expected Input/Output**: Input: Selected hyperlink from Step 4; Output: Content of the newly navigated page.
+4. **Evaluation Criteria**:
+   - Completeness of the new content (does it provide the needed information?)
+   - Relevance to the user query (is the content focused on the headmaster?)
+5. **Failure Indicators**: 
+   - The new content is still insufficient or irrelevant.
+   - No content is retrieved from the new link.
+6. **Preference Alignment**: Aligns with the preference for thoroughness in information gathering.
+7. **Fallback Evaluation Rules**: If similar steps are introduced later, prioritize the relevance and completeness of the new content.
+
+---
+
+### Step 6: Extract headmaster's details
+1. **Step Objective**: Finalize the identification of the headmaster by extracting relevant details.
+2. **Linked Requirements**: Requirement to provide a clear answer to the user query.
+3. **Expected Input/Output**: Input: Content from Step 2 or Step 5; Output: Name and details of the headmaster.
+4. **Evaluation Criteria**:
+   - Accuracy of the extracted information (is the name and details correct?)
+   - Clarity of the final answer (is the information presented clearly?)
+5. **Failure Indicators**: 
+   - Incorrect or incomplete information is provided.
+   - The answer lacks clarity or is ambiguous.
+6. **Preference Alignment**: Supports the preference for providing clear and direct answers.
+7. **Fallback Evaluation Rules**: If similar extraction steps are introduced later, ensure the final output maintains accuracy and clarity.
+
+This structured rubric will assist evaluators in assessing the execution of each step in the plan effectively.
+
+evaluator:
+result: ### Evaluation of Execution Steps
+
+---
+
+**Step ID or Summary**: Search the internal website database  
+**Rubric Reference**: Step 1  
+**Execution Summary**: The team searched the internal website database and identified the URL: https://ncusec.ncu.edu.tw/preselection/.  
+**Score**: Fully Met  
+**Justification**: The selected URL leads to a relevant source that likely contains information about the headmaster, fulfilling the accuracy and completeness criteria of the rubric. The internal database was appropriate for this task.  
+**Improvement Suggestions**: None.
+
+---
+
+**Step ID or Summary**: Read the content of the selected site  
+**Rubric Reference**: Step 2  
+**Execution Summary**: The team navigated to the identified URL and documented relevant sections and links present on the page.  
+**Score**: Fully Met  
+**Justification**: The team successfully identified multiple relevant links that could lead to information about the headmaster, demonstrating completeness and relevance in their findings.  
+**Improvement Suggestions**: None.
+
+---
+
+**Step ID or Summary**: Evaluate content sufficiency  
+**Rubric Reference**: Step 3  
+**Execution Summary**: The team evaluated the content from the previous step and searched for the term '校長' (headmaster) in the navigation items.  
+**Score**: Partially Met  
+**Justification**: While the team attempted to assess the sufficiency of the information, they did not find a direct link to the headmaster's information, indicating that the evaluation lacked depth. They should have considered alternative sources or additional links more thoroughly.  
+**Improvement Suggestions**: Ensure to explore all identified links and sections more comprehensively before concluding the sufficiency of the information.
+
+---
+
+**Step ID or Summary**: Identify relevant in-page links  
+**Rubric Reference**: Step 4  
+**Execution Summary**: The team identified several links from the content of the selected site that could lead to more information about the headmaster.  
+**Score**: Fully Met  
+**Justification**: The identified links were relevant and could potentially lead to additional information about the headmaster, meeting the criteria for relevance and completeness.  
+**Improvement Suggestions**: None.
+
+---
+
+**Step ID or Summary**: Repeat content reading for new hyperlink  
+**Rubric Reference**: Step 5  
+**Execution Summary**: The team planned to follow a relevant subpage URL to extract details about the headmaster but faced challenges in finding a search feature on the homepage.  
+**Score**: Not Met  
+**Justification**: The team was unable to proceed due to the lack of a search feature, which hindered their ability to gather comprehensive information. This indicates a failure to adapt to the situation effectively.  
+**Improvement Suggestions**: Develop a backup plan for situations where direct navigation or search features are unavailable, such as manually browsing through sections.
+
+---
+
+**Step ID or Summary**: Extract headmaster's details  
+**Rubric Reference**: Step 6  
+**Execution Summary**: The team successfully navigated to the '行政服務' page and documented that the current headmaster is 蕭述三, along with the names of vice chancellors.  
+**Score**: Fully Met  
+**Justification**: The information extracted was accurate and clearly presented, fulfilling the rubric's criteria for clarity and accuracy.  
+**Improvement Suggestions**: None.
+
+---
+
+### Overall Assessment
+The Execution Team demonstrated a strong ability to follow the structured plan and adapt to challenges, although there were some areas for improvement, particularly in evaluating content sufficiency and adapting to the lack of a search feature. Future efforts should focus on ensuring thorough exploration of all potential sources and having contingency plans for unexpected obstacles.
+

@@ -1,3 +1,5 @@
-/.env
-/__pycache__
-/Dataset
+.env
+__pycache__/
+Dataset
+Outputs
+screenshots
