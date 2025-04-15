@@ -1,7 +1,7 @@
 from tools import Tools
 
 # load_dotenv()
-# api_key = os.getenv("API_KEY_SELF")
+# api_key = os.getenv("API_KEY")
 # os.environ["OPENAI_API_KEY"] = api_key
 
 tools = Tools()
