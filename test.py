@@ -27,37 +27,16 @@ tool_dict = tools.tool_dict
 
 # del tools.selenium_controller
 
+import yaml
 
-
-def extract_evaluator_content(file_path):
-    """
-    從聊天紀錄中擷取 evaluator: 後的所有文字內容。
+def read_execution_team_agents_prompt(agent_name) -> str:
+    """Read the specified agent's system prompt. The agent is one of the member in execution team."""
+    with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
+        agents_parameter = yaml.safe_load(f)
     
-    :param file_path: 聊天紀錄檔案的路徑
-    :return: 包含所有 evaluator: 後文字內容的字串
-    """
-    evaluator_content = []
-    is_evaluator_section = False
+    return agents_parameter[agent_name]["prompt"]
 
-    with open(file_path, 'r', encoding='utf-8') as file:
-        for line in file:
-            # 檢查是否進入 evaluator: 區段
-            if line.strip().startswith("evaluator:"):
-                is_evaluator_section = True
-                # 擷取 evaluator: 後的內容
-                evaluator_content.append(line.split("evaluator:", 1)[-1].strip())
-            elif is_evaluator_section:
-                # 如果是 evaluator: 區段，繼續擷取內容
-                evaluator_content.append(line.strip())
-
-    return "\n".join(evaluator_content)
-
-
-
-file_path = "Docs\\evaluation_chat_log_archive.txt"
-evaluator_text = extract_evaluator_content(file_path)
-print(evaluator_text)
-
+print(read_execution_team_agents_prompt("Replanner"))
 
 
 # del tools.selenium_controller

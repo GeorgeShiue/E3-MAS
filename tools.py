@@ -15,7 +15,6 @@ from utils.selenium_controller import SeleniumController
 
 
 
-
 class Tools():
     def __init__(self, user_id = "1130"):
         # self.selenium_controller = SeleniumController()
@@ -352,15 +351,12 @@ class Tools():
             return ''.join(extracted_lines)
         
         @tool
-        def read_execution_team_agents_prompt() -> str:
-            """Read the agents prompt of execution team."""
+        def read_execution_team_agents_prompt(agent_name) -> str:
+            """Read the specified agent's system prompt. The agent is one of the member in execution team."""
             with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
                 agents_parameter = yaml.safe_load(f)
             
-            for agent in agents_parameter:
-                print(agent + " Prompt:")
-                print(agents_parameter[agent]["prompt"])
-                print()
+            return agents_parameter[agent_name]["prompt"]
 
 
 

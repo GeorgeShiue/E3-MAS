@@ -51,13 +51,13 @@ with open('agents_parameter.yaml', 'r', encoding="utf-8") as file:
     agents_parameter = yaml.safe_load(file)
 
 # Create React Agent
-def create_react_agent_with_yaml(agent_name):
+def create_react_agent_with_yaml(agent_name, response_format=None):
     llm_config = agents_parameter[agent_name]["llm_config"]
     prompt = agents_parameter[agent_name]["prompt"]
     tool_list = [tool_dict[name] for name in agents_parameter[agent_name]["tool_list"]]
 
     llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
-    agent = create_react_agent(llm, tool_list, prompt=prompt)
+    agent = create_react_agent(llm, tool_list, prompt=prompt, response_format=response_format)
 
     print(f"{agent_name}_llm_config:")
     for key, value in llm_config.items():
