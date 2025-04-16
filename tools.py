@@ -333,8 +333,8 @@ class Tools():
         EXECUTION_CHAT_LOG_FILEPATH = "Docs/execution_chat_log_archive.txt"
 
         @tool
-        def read_user_input_and_plan() -> str:
-            """Read user input and plan."""
+        def read_user_query_and_plan() -> str:
+            """Read user query and plan made by Planner."""
             content = []
             with open(EXECUTION_CHAT_LOG_FILEPATH, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -342,17 +342,26 @@ class Tools():
                         break
                     content.append(line)
 
+            # print("User input and plan:\n " + ''.join(content))
             return ''.join(content)
 
         @tool
         def read_execution_chat_log() -> str:
             """Read the chat log of execution team."""
             with open(EXECUTION_CHAT_LOG_FILEPATH, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                extracted_lines = lines[6:] # 提取指定範圍的行
-            # with open("chat_log.txt", "r", encoding="utf-8") as f:
-            #     content = f.read()
-            return ''.join(extracted_lines)
+                content = []
+                start = False
+                for line in f:
+                    if "executor:" in line:
+                        start = True
+                    if "solver:" in line:
+                        start = False
+
+                    if start:
+                        content.append(line)
+            
+            # print("Execution chat log:\n " + ''.join(content))
+            return ''.join(content)
         
         @tool
         def read_execution_team_agents_prompt(agent_name) -> str:
@@ -414,7 +423,7 @@ class Tools():
             "select_dropdown_option": select_dropdown_option,
             "click_span_with_aria_label": click_span_with_aria_label,
             "upload_file_with_id": upload_file_with_id,
-            "read_user_input_and_plan": read_user_input_and_plan,
+            "read_user_query_and_plan": read_user_query_and_plan,
             "read_execution_chat_log": read_execution_chat_log,
             "read_execution_team_agents_prompt": read_execution_team_agents_prompt,
             "read_evaluation_result": read_evaluation_result,
