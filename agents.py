@@ -95,10 +95,10 @@ planner = planner_prompt | planner_llm.with_structured_output(Plan) # 限制使�
 
 # Define Replanner Agent
 # * Replanner Agent 使用 ChatPromptTemplate.from_template() 搭配 with_structured_output(Act) 實現
-replanner_model = agents_parameter["Replanner"]["model"]
+replanner_llm_config = agents_parameter["Replanner"]["llm_config"]
 replanner_system_prompt = f"{agents_parameter['Replanner']['prompt']}"
 
-replanner_llm = ChatOpenAI(model=replanner_model) # ! Replanner需要使用gpt-4o才不會一直call tools
+replanner_llm = ChatOpenAI(model=replanner_llm_config["model"], temperature=replanner_llm_config["temperature"]) # ! Replanner需要使用gpt-4o才不會一直call tools
 replanner_prompt = ChatPromptTemplate.from_template(replanner_system_prompt)
 
 replanner = replanner_prompt | replanner_llm.with_structured_output(Act) # 限制使用特定模板回答問題

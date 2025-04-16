@@ -1,11 +1,14 @@
 import re
-import requests
-from bs4 import BeautifulSoup
-from io import BytesIO
-import pdfplumber
-import yaml
 import time
+import asyncio
 from functools import wraps
+from io import BytesIO
+
+import requests
+import yaml
+import aiohttp
+import pdfplumber
+from bs4 import BeautifulSoup
 
 from langchain_core.tools import tool
 from langchain_openai import OpenAIEmbeddings
@@ -62,6 +65,45 @@ class Tools():
             
             return result
 
+        async def process_link(link, url, websites):
+            title = link.get_text(strip=True)
+            if title == '':
+                return
+
+            href = link.get('href')
+            if not href:
+                return
+
+            final_url = ""
+
+            if 'http' in href:
+                final_url = href
+            else:
+                postclitics = ['html', 'htm', 'asp', 'php', 'pdf', 'PDF']
+                url_postclitic = next((p for p in postclitics if p in url), "")
+                psotclitic = any(p in href for p in postclitics)
+
+                temp_url = re.sub(rf'/[^/]+\.{url_postclitic}$', '', url) if psotclitic and url_postclitic else url
+                href = '/' + href.lstrip('/')
+                if temp_url.split('/')[-1] == href.split('/')[1]:
+                    temp_url = '/'.join(temp_url.split('/')[:-1])
+                final_url = temp_url + href
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(final_url, timeout=3, ssl=False) as response:
+                        if response.status == 200:
+                            encoding = response.charset or 'utf-8'
+                            websites.append({'title': title, 'link': final_url})
+            except Exception as e:
+                print(f"無法獲取[{title}]: [{final_url}] ，錯誤: {e}")
+
+        async def crawl_links_async(links, base_url):
+            websites = []
+            tasks = [process_link(link, base_url, websites) for link in links]
+            await asyncio.gather(*tasks)
+            return websites
+        
         @tool
         def website_links_crawler(link: str) -> str:
             """Takes url of a website and reads the HTML content of the website and then extracts all the links on that website."""
@@ -81,44 +123,10 @@ class Tools():
             if response.status_code == 200:
                 page_content = response.text
                 soup = BeautifulSoup(page_content, 'html.parser')
-                links = soup.find_all('a') # 找出所有超連結 # TODO 讀取iframe有問題
+                links = soup.find_all('a', href=True) # 找出所有超連結 # TODO 讀取iframe有問題
 
-                for link in links:
-                    title = link.get_text(strip=True)  # 提取連結的文字作為標題
-                    if title == '':
-                        continue
-
-                    href = link.get('href') # 提取連結的href屬性
-                    if href:
-                        final_url = ""
-
-                        if 'http' in href:  # 如果href由http開頭，直接使用
-                            final_url = href
-                        else:
-                            postclitics = ['html', 'htm', 'asp', 'php', 'pdf', 'PDF']  # 定義可能的後綴類型
-                            url_postclitic = next((p for p in postclitics if p in url), "")  # 從url中找到匹配的後綴
-                            psotclitic = any(p in href for p in postclitics)  # 檢查href中是否有後綴
-
-                            # 如果href和url都有後綴，從url中去除最後的部分，否則使用原始url
-                            temp_url = re.sub(rf'/[^/]+\.{url_postclitic}$', '', url) if psotclitic and url_postclitic else url
-                            href = '/' + href.lstrip('/')  # 確保href以單個斜杠開頭
-                            if temp_url.split('/')[-1] == href.split('/')[1]: # 處理相對連結
-                                temp_url = '/'.join(temp_url.split('/')[:-1])
-                            
-                            final_url = temp_url + href
-
-                        try: # 檢查組合後的連結是否有效
-                            test_response = requests.get(final_url, verify=False, timeout=1)
-                            encoding = test_response.apparent_encoding
-                            test_response.encoding = encoding
-                            if test_response.status_code == 200:
-                                # print(f"成功獲取[{title}]: [{final_url}] ，加入資料中。")
-                                websites.append({'title': title, 'link': final_url})
-                            # else:
-                                # print(f"無法獲取[{title}]: [{final_url}] ，不加入資料中。HTTP 狀態碼: {test_response.status_code}")
-                        except requests.exceptions.RequestException as e:
-                            print(f"無法獲取[{title}]: [{final_url}] ，不加入資料中。錯誤: {e}")
-
+                websites = asyncio.run(crawl_links_async(links, url))
+                # websites = await crawl_links_async(links, url)
                 print(f"成功獲取 [{url}] 中共{len(websites)}個連結。")
 
                 result = "\n".join([f"[{item['title']}]: [{item['link']}]" for item in websites])
@@ -141,7 +149,7 @@ class Tools():
             
             soup = BeautifulSoup(response.text, 'html.parser')
             content = soup.get_text()
-            print(f"成功讀取 [{url}] 並總結。")
+            print(f"成功讀取 [{url}] 內文。")
 
             cleaned_content = "\n".join([line for line in content.split("\n") if line.strip()])
             print(cleaned_content)
@@ -155,8 +163,8 @@ class Tools():
                 encoding = response.apparent_encoding
                 response.encoding = encoding
             except requests.exceptions.RequestException as e:
-                print(f"無法獲取網頁。錯誤: {e}")
-                return f"無法獲取網頁。錯誤: {e}"
+                print(f"無法獲取PDF。錯誤: {e}")
+                return f"無法獲取PDF。錯誤: {e}"
 
             if response.status_code == 200:
                 pdf_file = BytesIO(response.content)
