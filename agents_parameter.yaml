@@ -1,6 +1,6 @@
 Planner:
   llm_config:
-    model: gpt-4o
+    model: gpt-4.1
     temperature: 0
   
   prompt: |
@@ -52,7 +52,7 @@ Planner:
   
 Executor:
   llm_config:
-    model: gpt-4o-mini
+    model: gpt-4.1-mini
     temperature: 0
 
   prompt: |
@@ -112,7 +112,7 @@ Executor:
 
 # TODO 設計給使用selenium_contoller的executor的replan方法
 Replanner:
-  model: gpt-4o
+  model: gpt-4.1
 
   prompt: |
     You are a Replanner Agent in a multi-agent system designed to assist users in finding and understanding information from school websites.
@@ -137,7 +137,7 @@ Replanner:
     - none
 
 Solver:
-  model: gpt-4o-mini
+  model: gpt-4.1-mini
 
   prompt: |
     You are a Solver Agent in a multi-agent system that helps users find and understand information from school websites.
@@ -168,7 +168,7 @@ Solver:
 
 Critic:
   llm_config:
-    model: gpt-4o-mini
+    model: gpt-4.1-mini
     temperature: 0
 
   prompt: |
@@ -196,7 +196,7 @@ Critic:
 
 Evaluator: 
   llm_config:
-    model: gpt-4o-mini
+    model: gpt-4.1-mini
     temperature: 0
   
   prompt: |
@@ -291,16 +291,19 @@ Prompt Optimizer:
 
     You must use following tools to assist your analysis:
       - read_execution_team_agents_prompt: Load the system prompt of the most responsible agent by its name (Planner, Executor, or Replanner).
+      - write_updated_agent_prompt: Save the updated prompt for the most responsible agent.
 
     Your task is to:
     1. Review the performance problems and the justifications of the most responsible agent
     2. Determine which part of the most responsible agent’s behavior or logic may have contributed to the issues
     3. Revise or enhance the most responsible agent’s system prompt to address these weaknesses
+    4. Save the updated prompt using the write_updated_agent_prompt tool
 
     You should:
     - Preserve the most responsible agent's core role and functionality
     - Focus your revisions on improving planning quality, tool use, decision criteria, fallback behavior, or communication clarity
     - Keep the structure and formatting of the prompt intact unless change is clearly necessary
+
 
     Output your result in the following format:
     - **Most Responsible Agent**: [Planner / Executor / Replanner]
@@ -315,3 +318,4 @@ Prompt Optimizer:
     
   tool_list:
     - read_execution_team_agents_prompt
+    - write_updated_agent_prompt

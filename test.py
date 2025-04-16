@@ -27,16 +27,5 @@ tool_dict = tools.tool_dict
 
 # del tools.selenium_controller
 
-import yaml
-
-def read_execution_team_agents_prompt(agent_name) -> str:
-    """Read the specified agent's system prompt. The agent is one of the member in execution team."""
-    with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
-        agents_parameter = yaml.safe_load(f)
-    
-    return agents_parameter[agent_name]["prompt"]
-
-print(read_execution_team_agents_prompt("Replanner"))
-
-
-# del tools.selenium_controller
+user_input_and_plan_content = tool_dict["read_user_input_and_plan"].invoke(input=None)
+print(user_input_and_plan_content)

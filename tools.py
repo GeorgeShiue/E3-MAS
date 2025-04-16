@@ -335,10 +335,14 @@ class Tools():
         @tool
         def read_user_input_and_plan() -> str:
             """Read user input and plan."""
+            content = []
             with open(EXECUTION_CHAT_LOG_FILEPATH, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                extracted_lines = lines[0:5] # 提取指定範圍的行
-            return ''.join(extracted_lines)
+                for line in f:
+                    if "executor:" in line:  # 偵測到 "executor" 關鍵字時停止
+                        break
+                    content.append(line)
+
+            return ''.join(content)
 
         @tool
         def read_execution_chat_log() -> str:
@@ -360,8 +364,9 @@ class Tools():
 
 
 
-        EVALUATION_CHAT_LOG_FILEPATH = "Docs/evaluation_chat_log_archive.txt"
         # ----- Evoluation Team Tools -----
+        EVALUATION_CHAT_LOG_FILEPATH = "Docs/evaluation_chat_log_archive.txt"
+
         @tool
         def read_evaluation_result():
             """Read the evaluation result of execution team."""
@@ -373,13 +378,20 @@ class Tools():
                     # 檢查是否進入 evaluator: 區段
                     if line.strip().startswith("evaluator:"):
                         is_evaluator_section = True
-                        # 擷取 evaluator: 後的內容
-                        evaluator_content.append(line.split("evaluator:", 1)[-1].strip())
+                        evaluator_content.append(line.split("evaluator:", 1)[-1].strip()) # 擷取 evaluator: 後的內容
                     elif is_evaluator_section:
-                        # 如果是 evaluator: 區段，繼續擷取內容
-                        evaluator_content.append(line.strip())
+                        evaluator_content.append(line.strip()) # 如果是 evaluator: 區段，繼續擷取內容
 
             return "\n".join(evaluator_content)
+        
+        @tool
+        def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
+            """Write the updated system prompt of specified agent to the YAML file."""
+            
+            with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
+                f.write(f"{agent_name}:\n{updated_prompt}")
+
+            return f"{agent_name} updated prompt saved successfully."
 
 
 
@@ -406,6 +418,7 @@ class Tools():
             "read_execution_chat_log": read_execution_chat_log,
             "read_execution_team_agents_prompt": read_execution_team_agents_prompt,
             "read_evaluation_result": read_evaluation_result,
+            "write_updated_agent_prompt": write_updated_agent_prompt,
         }
 
     # def __del__(self):
