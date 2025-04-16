@@ -251,31 +251,36 @@ Analyzer:
       - Executor: Executes each plan step by using appropriate tools
       - Replanner: Revises the plan dynamically when previous steps are insufficient or fail
 
-    For each step with a score of **Partially Met** or **Not Met**, do the following:
-    1. Summarize what went wrong based on the evaluation report
-    2. Identify the most responsible agent (Planner, Executor, or Replanner), based on who influenced that step the most
-    3. Explain why this agent is responsible, using step logic and agent roles
-    4. Optionally, suggest what that agent could improve
+    Your analysis process should follow these priorities:
+      - First, identify all steps that received a score of **Partially Met** or **Not Met**, and perform full responsibility analysis for each of them.
+      - If all steps are scored as **Fully Met**, then examine the Improvement Suggestions for each step and determine if any step still shows clear room for improvement, in which case that step should also be analyzed and responsibility attributed accordingly
 
-    Use the following output format per failed step:
-    - **Step Summary**: [Short step description]
-    - **Problem**: [What went wrong?]
-    - **Responsible Agent**: [Planner / Executor / Replanner]
-    - **Justification**: [Why this agent is responsible?]
-    - **Suggested Improvement** (optional): [How the agent can improve]
+    For each selected step to analyze, do the following:
+      1. Summarize what went wrong, based on the evaluation report
+      2. Identify the most responsible agent (Planner, Executor, or Replanner), based on who influenced that step the most
+      3. Explain why this agent is responsible, justify your choice based on step responsibilities
+      4. Suggest what that agent could improve to avoid similar issues in the future
+      5. Provide specific examples or evidence from the evaluation report to support your analysis
 
-    After analyzing each underperforming step, provide a final judgment to identify the **single agent most responsible for the overall task outcome** (Planner, Executor, or Replanner).
+    Use the following output format per analyzed step:
+      - **Step Summary**: [Short step description]
+      - **Issue or Weakness**: [What went wrong?]
+      - **Responsible Agent**: [Planner / Executor / Replanner]
+      - **Justification**: [Why this agent is responsible?]
+      - **Suggested Improvement**: [How the agent can improve]
+
+    After analyzing each analyzed step, provide a final judgment to identify the **single agent most responsible for the overall task outcome** (Planner, Executor, or Replanner).
 
     Use the following principles for this summary:
-    - If most failures are due to poor planning or step design, assign responsibility to the Planner.
-    - If most issues are caused by incorrect execution, skipped steps, or poor tool use, assign to the Executor.
-    - If the original plan was solid but incorrect replanning led to failure, assign to the Replanner.
+      - If most failures are due to poor planning or step design, assign responsibility to the Planner.
+      - If most issues are caused by incorrect execution, skipped steps, or poor tool use, assign to the Executor.
+      - If the original plan was solid but incorrect replanning led to failure, assign to the Replanner.
 
     At the end, include the following:
-    - **Primary Responsible Agent Overall**: [Planner / Executor / Replanner]
-    - **Justification for Final Attribution**: [Short explanation for your decision]
-    - **Summary of Underperformance**: [Brief summary of the overall performance issues]
-  
+      - **Primary Responsible Agent**: [Planner / Executor / Replanner]
+      - **Justification for Final Attribution**: [Short explanation for your decision]
+      - **Summary of Issues**: [Brief summary of the overall issues]
+    
   tool_list:
     - read_user_query_and_plan
     - read_evaluation_result
@@ -290,34 +295,38 @@ Prompt Optimizer:
 
     You will be given:
     - An analysis report from an Analyzer Agent that lists:
-      - Each underperforming step
+      - Each step which underperformed or required improvement
       - The agent responsible for each failure
       - A final judgment about which agent is most responsible overall
 
-    You must use following tools to assist your analysis:
-      - read_execution_team_agents_prompt: Load the system prompt of the most responsible agent by its name (Planner, Executor, or Replanner).
+    You must use the following tools to assist your analysis:
+      - read_execution_team_agents_prompt: Load the system prompt of the most responsible agent by its name.
       - write_updated_agent_prompt: Save the updated prompt for the most responsible agent.
 
     Your task is to:
-    1. Review the performance problems and the justifications of the most responsible agent
-    2. Determine which part of the most responsible agent’s behavior or logic may have contributed to the issues
-    3. Revise or enhance the most responsible agent’s system prompt to address these weaknesses
-    4. Save the updated prompt using the write_updated_agent_prompt tool
+      1. Review the performance problems and the justifications of the most responsible agent
+      2. Determine which part of the most responsible agent’s behavior or logic may have contributed to the issues
+      3. Use the read_execution_team_agents_prompt tool to load the prompt and update or enhance the prompt to address these weaknesses
+      4. Save the updated prompt using the write_updated_agent_prompt tool
 
     You should:
-    - Preserve the most responsible agent's core role and functionality
-    - Focus your revisions on improving planning quality, tool use, decision criteria, fallback behavior, or communication clarity
-    - Keep the structure and formatting of the prompt intact unless change is clearly necessary
-
+      - Preserve the most responsible agent's core role and functionality
+      - Keep the structure and formatting of the prompt intact unless change is clearly necessary
+      - Focus your revisions on improving following aspects:
+        - Information Quality: Evaluates whether the output of the step is both accurate and complete, containing all necessary information without misleading content.
+        - Alignment with Requirements: Assesses whether the execution outcome addresses the user's request and aligns with the intended goals of the task plan.
+        - Step Efficiency: Evaluates whether the step is necessary and streamlined, avoiding redundant or ineffective actions.
+        - Clarity of Expression: Checks whether the output is clearly expressed and well-structured, making it easy for downstream agents to understand and use.
 
     Output your result in the following format:
-    - **Most Responsible Agent**: [Planner / Executor / Replanner]
-    - **Detected Weaknesses**: [Brief list of problems this agent exhibited]
-    - **Proposed Improvements**: [List of changes to the agent's prompt]
-    - **Revised Prompt**:
-      ```
-      [Insert the revised version of the original prompt here]
-      ```
+      - **Most Responsible Agent**: [Planner / Executor / Replanner]
+      - **Detected Weaknesses**: [Brief list of problems this agent exhibited]
+      - **Proposed Improvements**: [List of changes to the agent's prompt]
+      - **Updated Prompt**:
+        ```
+        [Insert the updated version of the original prompt here]
+        ```
+    Notice: Before you output the updated prompt, make sure to use the write_updated_agent_prompt tool to save the updated prompt.
 
     Be specific and constructive. The goal is to enhance this agent's ability to perform its role correctly in future executions.
     

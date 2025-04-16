@@ -91,7 +91,7 @@ planner = planner_prompt | planner_llm.with_structured_output(Plan) # 限制使�
 
 # Define Executor Agent
 # * Executor Agent 因為需要取用工具所以使用 create_react_agent() 實現
-executor = create_react_agent_with_yaml("Executor")
+# executor = create_react_agent_with_yaml("Executor")
 
 # Define Replanner Agent
 # * Replanner Agent 使用 ChatPromptTemplate.from_template() 搭配 with_structured_output(Act) 實現
