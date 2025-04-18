@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from tools import Tools
+from tools import ExecutionTools, EvaluationTools, EvolutionTools
 
 
 
@@ -54,7 +55,14 @@ with open('agents_parameter.yaml', 'r', encoding="utf-8") as file:
 def create_react_agent_with_yaml(agent_name, response_format=None):
     llm_config = agents_parameter[agent_name]["llm_config"]
     prompt = agents_parameter[agent_name]["prompt"]
-    tool_list = [tool_dict[name] for name in agents_parameter[agent_name]["tool_list"]]
+
+    # define tools for agent
+    execution_tools = ExecutionTools()
+    evaluation_tools = EvaluationTools()
+    evolution_tools = EvolutionTools()
+    
+    all_tool_dicts = {**execution_tools.tool_dict, **evaluation_tools.tool_dict, **evolution_tools.tool_dict}  # merge all tool dicts
+    tool_list = [all_tool_dicts[tool] for tool in agents_parameter[agent_name]["tool_list"] if tool in all_tool_dicts] # select tools from all_tool_dicts
 
     llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
     agent = create_react_agent(llm, tool_list, prompt=prompt, response_format=response_format)
