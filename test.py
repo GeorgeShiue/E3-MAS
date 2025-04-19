@@ -97,10 +97,10 @@ os.environ["OPENAI_API_KEY"] = api_key
 
 import yaml
 
-with open('agents_parameter.yaml', 'r', encoding="utf-8") as file:
+with open('agent_parameter.yaml', 'r', encoding="utf-8") as file:
     agents_parameter = yaml.safe_load(file)
 
-from agents import create_react_agent_with_yaml
+from agent import create_react_agent_with_yaml
 
 executor = create_react_agent_with_yaml("Executor")
 

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
-from tools import ExecutionTool
+from tool import ExecutionTool
 
 from utils.agent_factory import AgentFactory
 

@@ -61,8 +61,8 @@ class EvolutionTool():
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
 
 def read_agents_parameter_yaml():
-    """Read the agents_parameter.yaml file and return the content."""
-    with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
+    """Read the agent_parameter.yaml file and return the content."""
+    with open('agent_parameter.yaml', 'r', encoding="utf-8") as f:
         agents_parameter = yaml.safe_load(f)
     
     return agents_parameter

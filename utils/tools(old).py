@@ -395,7 +395,7 @@ class Tools():
         @tool
         def read_execution_team_agents_prompt(agent_name) -> str:
             """Read the specified agent's system prompt. The agent is one of the member in execution team."""
-            with open('agents_parameter.yaml', 'r', encoding="utf-8") as f:
+            with open('agent_parameter.yaml', 'r', encoding="utf-8") as f:
                 agents_parameter = yaml.safe_load(f)
             
             return agents_parameter[agent_name]["prompt"]

@@ -8,7 +8,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-from tools import ExecutionTool, EvaluationTool, EvolutionTool, read_agents_parameter_yaml
+from tool import ExecutionTool, EvaluationTool, EvolutionTool, read_agents_parameter_yaml
 
 class AgentFactory():
     @staticmethod
