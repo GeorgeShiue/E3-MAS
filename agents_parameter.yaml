@@ -162,7 +162,8 @@ Replanner:
     - none
 
 Solver:
-  model: gpt-4.1-mini
+  llm_config:
+    model: gpt-4.1-mini
 
   prompt: |
     You are a Solver Agent in a multi-agent system that helps users find and understand information from school websites.

@@ -1,135 +1,118 @@
-import yaml
-from typing import Union, List
+from typing import List, Union
+
 from pydantic import BaseModel, Field
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 
-from tools import Tools
-from tools import ExecutionTools, EvaluationTools, EvolutionTools
+from tools import ExecutionTool
 
-
-
-# Initialize the tools
-tools = Tools()
-tool_dict = tools.tool_dict
-
-# print("This app is using the following tool:")
-# for tool in tool_dict:
-#     print(tool)
-# print()
+from utils.agent_factory import AgentFactory
 
 
 
-# Define Agent Response Class
-class Plan(BaseModel):
-    """Plan to follow in future"""
+# Execution Team Agent
+class ExecutionAgent():
+    # Execution Team Response
+    class Plan(BaseModel):
+        """Plan to follow in future"""
 
-    steps: List[str] = Field(
-        description="different steps to follow, should be in sorted order"
-    )
+        steps: List[str] = Field(
+            description="different steps to follow, should be in sorted order"
+        )
 
-class Response(BaseModel):
-    """Response to user."""
+    class Response(BaseModel):
+        """Response to user."""
 
-    response: str
+        response: str
 
-class Act(BaseModel):
-    """Action to perform."""
+    class Act(BaseModel):
+        """Action to perform."""
 
-    action: Union[Response, Plan] = Field(
-        description="Action to perform. If you want to respond to user, use Response. "
-        "If you need to further use tools to get the answer, use Plan."
-    )
+        action: Union['ExecutionAgent.Response', 'ExecutionAgent.Plan'] = Field(
+            description="Action to perform. If you want to respond to user, use Response. "
+            "If you need to further use tools to get the answer, use Plan."
+        )
 
+    def __init__(self):
+        self.execution_tools = ExecutionTool()
+        self.planner = self.create_planner_agent()
+        self.executor = AgentFactory.create_react_agent_with_yaml("Executor", self.execution_tools.tool_dict)
+        self.replanner = self.create_replanner_agent()
+        self.solver = self.create_solver_agent()
 
+    def create_planner_agent(self):
+        # * Plannger Agent 使用 ChatPromptTemplate.from_messages() 搭配 with_structured_output(Plan) 實現
+        llm_config, planner_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Planner")
 
-# Define Agents
+        planner_llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
+        planner_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", planner_system_prompt),
+                ("placeholder", "{user_input}"), # placeholer 用來動態嵌入使用者輸入的訊息
+            ]
+        )
 
-# Load Agents Parameter from YAML file
-# ! 注意yaml檔案版本
-with open('agents_parameter.yaml', 'r', encoding="utf-8") as file:
-    agents_parameter = yaml.safe_load(file)
+        AgentFactory.print_agent_parameter("Planner")
 
-# Create React Agent
-def create_react_agent_with_yaml(agent_name, response_format=None):
-    llm_config = agents_parameter[agent_name]["llm_config"]
-    prompt = agents_parameter[agent_name]["prompt"]
+        planner = planner_prompt | planner_llm.with_structured_output(self.Plan) # 限制使用特定模板回答問題
+        return planner
 
-    # define tools for agent
-    execution_tools = ExecutionTools()
-    evaluation_tools = EvaluationTools()
-    evolution_tools = EvolutionTools()
-    
-    all_tool_dicts = {**execution_tools.tool_dict, **evaluation_tools.tool_dict, **evolution_tools.tool_dict}  # merge all tool dicts
-    tool_list = [all_tool_dicts[tool] for tool in agents_parameter[agent_name]["tool_list"] if tool in all_tool_dicts] # select tools from all_tool_dicts
+    def create_replanner_agent(self):
+        # * Replanner Agent 使用 ChatPromptTemplate.from_template() 搭配 with_structured_output(Act) 實現
+        llm_config, replanner_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Replanner")
 
-    llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
-    agent = create_react_agent(llm, tool_list, prompt=prompt, response_format=response_format)
+        replanner_llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"]) # ! Replanner需要使用gpt-4o才不會一直call tools
+        replanner_prompt = ChatPromptTemplate.from_template(replanner_system_prompt)
+        
+        AgentFactory.print_agent_parameter("Replanner")
 
-    print(f"{agent_name}_llm_config:")
-    for key, value in llm_config.items():
-        print(f"{key}: {value}")
-    print(f"{agent_name}_prompt: \n" + prompt)
-    print(f"{agent_name}_tool_list: ")
-    for tool in tool_list:
-        print(tool.name)
+        replanner = replanner_prompt | replanner_llm.with_structured_output(self.Act) # 限制使用特定模板回答問題
+        return replanner
 
-    return agent
+    def create_solver_agent(self):
+        # * Solver Agent 使用 ChatPromptTemplate.from_template() 實現        
+        llm_config, solver_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Solver")
 
-# Define Planner Agent
-# * Plannger Agent 使用 ChatPromptTemplate.from_messages() 搭配 with_structured_output(Plan) 實現
-planner_llm_config = agents_parameter["Planner"]["llm_config"]
-planner_system_prompt = agents_parameter["Planner"]["prompt"]
+        solver_llm = ChatOpenAI(model=llm_config["model"])
+        solver_prompt = ChatPromptTemplate.from_template(solver_system_prompt)
 
-planner_llm = ChatOpenAI(model=planner_llm_config["model"], temperature=planner_llm_config["temperature"])
-planner_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", planner_system_prompt),
-        ("placeholder", "{user_input}"), # placeholer 用來動態嵌入使用者輸入的訊息
-    ]
-)
+        AgentFactory.print_agent_parameter("Solver")
 
-planner = planner_prompt | planner_llm.with_structured_output(Plan) # 限制使用特定模板回答問題
+        solver = solver_prompt | solver_llm
+        return solver
 
-# print("planner_llm_config:")
-# for key, value in planner_llm_config.items():
-#     print(f"{key}: {value}")
-# print("planner_system_prompt: \n" + planner_system_prompt)
+# Evaluation Team Agent
+class EvaluationAgent():
+    def __init__(self):
+        self.critic = AgentFactory.create_react_agent_with_yaml("Critic")
+        self.evaluator = AgentFactory.create_react_agent_with_yaml("Evaluator")
 
-# Define Executor Agent
-# * Executor Agent 因為需要取用工具所以使用 create_react_agent() 實現
-# executor = create_react_agent_with_yaml("Executor")
-
-# Define Replanner Agent
-# * Replanner Agent 使用 ChatPromptTemplate.from_template() 搭配 with_structured_output(Act) 實現
-replanner_llm_config = agents_parameter["Replanner"]["llm_config"]
-replanner_system_prompt = f"{agents_parameter['Replanner']['prompt']}"
-
-replanner_llm = ChatOpenAI(model=replanner_llm_config["model"], temperature=replanner_llm_config["temperature"]) # ! Replanner需要使用gpt-4o才不會一直call tools
-replanner_prompt = ChatPromptTemplate.from_template(replanner_system_prompt)
-
-replanner = replanner_prompt | replanner_llm.with_structured_output(Act) # 限制使用特定模板回答問題
-
-# print("replanner_model: " + replanner_model)
-# print("replanner_prompt: \n" + replanner_system_prompt)
-
-# Define Solver Agent
-# * Solver Agent 使用 ChatPromptTemplate.from_template() 實現
-solver_model = agents_parameter["Solver"]["model"]
-solver_system_prompt = agents_parameter["Solver"]["prompt"]
-
-solver_llm = ChatOpenAI(model=solver_model)
-solver_prompt = ChatPromptTemplate.from_template(solver_system_prompt)
-
-solver = solver_prompt | solver_llm
-
-# print("solver_model: " + solver_model)
-# print("solver_system_prompt: \n" + solver_system_prompt)
+# Evolution Team Agent
+class EvolutionAgent():
+    def __init__(self):
+        self.analyzer = AgentFactory.create_react_agent_with_yaml("Analyzer")
+        self.prompt_optimizer = AgentFactory.create_react_agent_with_yaml("Prompt Optimizer")
 
 
-# # Define Critic Agent
-# critic = create_react_agent_with_yaml("Critic")
 
-# # Define Evaluator Agent
-# evaluator = create_react_agent_with_yaml("Evaluator")
+if __name__ == "__main__":
+    # Load environment variables from .env file
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+    os.environ["OPENAI_API_KEY"] = api_key    
+
+    import time
+
+    start_time = time.time()
+
+    execution_agent = ExecutionAgent()
+    evaluation_agent = EvaluationAgent()
+    evolution_agent = EvolutionAgent()
+
+    end_time = time.time()
+
+    print(f"Initialize time: {end_time - start_time} seconds")
