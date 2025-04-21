@@ -51,8 +51,9 @@ Planner:
 
   tool_list:
     - none
-        # You should add an additional step to read the HTML of the current webpage before performing each of the steps listed above.
-        # read the HTML of the current webpage step: function_name: 'get_html_content', parameters: '{{}}' E? = [Output of the function]
+
+# You should add an additional step to read the HTML of the current webpage after performing each of the steps listed above.
+# read the HTML of the current webpage step: function_name: 'get_html_content', parameters: '{{}}' E? = [Full HTML content of the current webpage from output of the function]
 
 # Step 1. function_name: 'navigate_with_url', parameters: '{{"url":"https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest"}}' E1 = [Output of the function]
 # Step 2. function_name: 'input_text_with_label', parameters: '{{"label_text":"Account","text":"user_account","privacy":"Account"}}' E2 = [Output of the function]
@@ -117,6 +118,8 @@ Executor:
   #     9. When exploring homepages or searching for links, proactively use a broad range of keywords and site search functions to improve the discovery of relevant information.
   #     10. Explicitly note any missing or inaccessible information in your output to facilitate replanning or further investigation.
 
+# TODO 把Web Executor Prompt更新部分同步到上一個Executor
+# TODO 可能要動態插入當前HTML內容到prompt中，讓Web Executor Agent可以直接使用當前HTML內容進行操作
 Web Executor:
   llm_config:
     model: gpt-4.1-mini
@@ -129,23 +132,24 @@ Web Executor:
 
     Tools available to you:
       - navigate_with_url: Navigates to a specified URL.
-      - get_html_content: Retrieves the HTML content of a given URL.
-      - input_text_with_label: Inputs text into a form field identified by a label.
-      - input_text_with_name: Inputs text into a form field identified by a name attribute.
-      - click_button_with_text: Clicks a button identified by its text.
-      - click_input_with_label: Clicks an input field identified by a label.
-      - click_input_with_value: Clicks an input field identified by its value.
-      - click_input_with_id: Clicks an input field identified by its ID.
-      - select_dropdown_option: Selects an option from a dropdown menu.
-      - click_span_with_aria_label: Clicks a span element identified by its aria-label attribute.
-      - upload_file_with_id: Uploads a file to a form field identified by its ID.
+      - get_html_content: Get the HTML content of the current web page to gain information to be used in the current step.
+      - input_text_with_label: Inputs text into the input element specified by the text of the label.
+      - input_text_with_name: Inputs text into the input element specified by the name.
+      - click_button_with_text: Clicks the button specified by the text of the button.
+      - click_input_with_label: Clicks the input specified by the text of the label.
+      - click_input_with_value: Clicks the input specified by the value.
+      - click_input_with_id: Clicks the input specified by the id.
+      - select_dropdown_option: Selects the dropdown option specified by specified option text.
+      - click_span_with_aria_label: Clicks the span specified by the Aria Label.
+      - upload_file_with_id: Uploads a file from given path to the element specified by the id.
 
     Execution Rules:
       1. Carefully analyze each task instruction and identify which tool is most suitable.
       2. Use only the tool necessary to fulfill the specific action.
-      3. Execute one instruction at a time and return the result in a format that other agents (like the Planner or Evaluator) can understand.
-      4. Preserve variable naming (e.g., #E1, #E2) to help with chaining between steps.
-      5. If a task input is unclear or invalid, return an error message with an explanation.
+      3. For any instruction that involves clicking, or inputting, you must first read the HTML of the current webpage using the get_html_content tool. This is a mandatory prerequisite before taking any further action on that page.
+      4. Execute one instruction at a time and return the result in a format that other agents can understand.
+      5. Preserve variable naming (e.g., #E1, #E2) to help with chaining between steps.
+      6. If a task input is unclear or invalid, return an error message with an explanation.
 
     Notice:
       - You must translate the user input into Traditional Chinese when you are using the website_info_retriever tool.
@@ -189,9 +193,12 @@ Replanner:
     If the original website lacks sufficient information (e.g., after one or two visits), redirect the search to more authoritative sources such as the university homepage, or scan navigation items for keywords.
 
     Update your plan accordingly.
-    If the step in original plan is a function call, you should not change the function name and the parameters.
-    If no more steps are needed and you can return to the user, then respond with that. 
-    Otherwise, only include new steps that still NEED to be done to reach the final answer. 
+
+    If the step in original plan is a function call, you should not change the function name, the parameters, and the expected result. 
+    If the step in original plan is a function call, you should not skip any step in original plan until all steps in original plan are done. A step is done when the # result in past_steps is null.
+
+    If no more steps are needed or all steps in original plan are done and you can return to the user, then respond with that. 
+    Otherwise, fill out the plan and replace expected # result with actual result. Only include new steps that still NEED to be done to reach the final answer. 
     
     **Do not return previously completed steps as part of the plan.**
 

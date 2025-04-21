@@ -60,7 +60,7 @@ class ExecutionGraph():
         task_formatted = f"""For the following plan:
     {plan_str}\n\nYou are tasked with executing step {1}, {task}."""
         # agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
-        agent_response = await self.agent.web_executor.ainvoke({"messages": [("user", task_formatted)]}) # test web executor agent
+        agent_response = await self.agent.web_executor.ainvoke({"messages": [("user", task_formatted)]}) # *test web executor agent
         state["history"].append(("Executor", (task, agent_response["messages"][-1].content)))
 
         return {
@@ -158,10 +158,10 @@ if __name__ == "__main__":
     # Who is the headmaster of National Central University in Taiwan?
     # Summarize the content of the 111 Academic Affairs Regulations.
     # Please help me gather information related to scholarship applications.
-    # Please help me apply leave application.
-    config = {"recursion_limit": 50}
+    # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
+    config = {"recursion_limit": 30}
     inputs = {
-        "input": "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.",
+        "input": " Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.",
         "history": [], # 初始化儲存History的list
     }
     write_to_chat_log(f"User Query:\n{inputs['input']}\n\n")

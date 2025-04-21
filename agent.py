@@ -153,18 +153,17 @@ if __name__ == "__main__":
     for step in response.steps:
         print(step)
     
-    responses = []
+    # responses = []
 
-    # Step 1. function_name: 'navigate_with_url', parameters: '{\"url\":\"https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest\"}'
-    responses.append(executor.invoke({"messages": [("user", "Step 1. Navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest")]}))
-    responses.append(executor.invoke({"messages": [("user", "Step 2. function_name: 'input_text_with_label', parameters: '{\"label_text\":\"Account\",\"text\":\"user_account\",\"privacy\":\"Account\"}'")]}))
-    responses.append(executor.invoke({"messages": [("user", "Step 3. function_name: 'input_text_with_label', parameters: '{\"label_text\":\"Password\",\"text\":\"user_password\",\"privacy\":\"Password\"}'")]}))
-    responses.append(executor.invoke({"messages": [("user", "Step 4. function_name: 'click_button_with_text', parameters: '{\"text\":\"Login to Portal\"}'")]}))
-    responses.append(executor.invoke({"messages": [("user", "Step 5. function_name: 'click_button_with_text', parameters: '{\"text\":\"Go to\"}'")]}))
-    responses.append(executor.invoke({"messages": [("user", "Step 6. function_name: 'click_button_with_text', parameters: '{\"text\":\"申請\"}'")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 1. Navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 2. function_name: 'input_text_with_label', parameters: '{\"label_text\":\"Account\",\"text\":\"user_account\",\"privacy\":\"Account\"}'")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 3. function_name: 'input_text_with_label', parameters: '{\"label_text\":\"Password\",\"text\":\"user_password\",\"privacy\":\"Password\"}'")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 4. function_name: 'click_button_with_text', parameters: '{\"text\":\"Login to Portal\"}'")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 5. function_name: 'click_button_with_text', parameters: '{\"text\":\"Go to\"}'")]}))
+    # responses.append(executor.invoke({"messages": [("user", "Step 6. function_name: 'click_button_with_text', parameters: '{\"text\":\"申請\"}'")]}))
 
-    for response in responses:
-        print("Response: " + response["messages"][-1].content)
+    # for response in responses:
+    #     print("Response: " + response["messages"][-1].content)
 
     end_time = time.time()
 

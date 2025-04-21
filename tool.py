@@ -66,9 +66,9 @@ class WebOperationTool():
         
         @tool
         def get_html_content() -> str:
-            """Get the HTML content of the current web page."""
+            """Get the HTML content of the current web page to gain information to be used in the current step."""
             result = self.selenium_controller.get_content(self.current_user_id)
-            # print(result)
+            print(result)
             return result
 
         @tool
@@ -89,7 +89,7 @@ class WebOperationTool():
         @auto_screenshot
         def input_text_with_name(name: str, input_text: str, privacy: str = "None") -> str:
             """
-            Inputs text into the input element specified by the text of the label.
+            Inputs text into the input element specified by the name.
             Replace the text argument with the external information when the privacy parameter is not "None".
             """
             if privacy == "Account":
@@ -136,7 +136,7 @@ class WebOperationTool():
         @tool
         @auto_screenshot
         def select_dropdown_option(option_text: str) -> str:
-            """Selects the dropdown option specified by its text."""
+            """Selects the dropdown option specified by specified option text."""
             result = self.selenium_controller.select_dropdown_option(self.current_user_id, option_text)
             return result
 
