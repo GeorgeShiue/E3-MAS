@@ -23,7 +23,7 @@ class ToolBox():
         @tool
         def navigate(user_id: str, url: str) -> str:
             """Navigate to the specified URL."""
-            result = self.selenium_controller.navigate(user_id, url)
+            result = self.selenium_controller.navigate_with_url(user_id, url)
             return result
 
         @tool

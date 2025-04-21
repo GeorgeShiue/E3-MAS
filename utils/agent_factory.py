@@ -12,7 +12,7 @@ from tool import ExecutionTool, EvaluationTool, EvolutionTool, read_agents_param
 
 class AgentFactory():
     @staticmethod
-    def extract_agent_parameter(agent_name):
+    def extract_agent_parameter_yaml(agent_name):
         agents_parameter = read_agents_parameter_yaml()
 
         llm_config = agents_parameter[agent_name]["llm_config"]
@@ -23,7 +23,7 @@ class AgentFactory():
 
     @staticmethod
     def print_agent_parameter(agent_name):
-        llm_config, prompt, tool_list = AgentFactory.extract_agent_parameter(agent_name)
+        llm_config, prompt, tool_list = AgentFactory.extract_agent_parameter_yaml(agent_name)
 
         print(f"{agent_name}_llm_config:")
         for key, value in llm_config.items():
@@ -43,12 +43,7 @@ class AgentFactory():
 
     @staticmethod
     def create_react_agent_with_yaml(agent_name, tool_dicts=None, response_format=None):
-        # agents_parameter = read_agents_parameter_yaml()
-
-        # llm_config = agents_parameter[agent_name]["llm_config"]
-        # prompt = agents_parameter[agent_name]["prompt"]
-
-        llm_config, prompt, tool_list = AgentFactory.extract_agent_parameter(agent_name)
+        llm_config, prompt, tool_list = AgentFactory.extract_agent_parameter_yaml(agent_name)
 
         # if tool_dicts not provided, look for tools in all tools
         if tool_dicts is None:

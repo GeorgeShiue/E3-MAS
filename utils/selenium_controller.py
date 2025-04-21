@@ -17,9 +17,10 @@ class SeleniumController:
         self.browser_list = []
 
     def __del__(self):
-            """
-            Destructor to ensure all containers are stopped and removed.
-            """
+        """
+        Destructor to ensure all containers are stopped and removed.
+        """
+        try:
             print("Cleaning up all containers...")
             containers = self.client.containers.list()
             print(f"Found {len(containers)} containers.")
@@ -30,6 +31,8 @@ class SeleniumController:
                     print(f"Container {container.name} has been stopped and removed.")
             self.port_list.clear()
             self.used_ports.clear()
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
 
     def create_container(self, user_id):
         """
@@ -277,7 +280,7 @@ class SeleniumController:
             return
         print(f"Clicked element with Xpath {xpath} for user_id {user_id}")
 
-    def navigate(self, user_id, url):
+    def navigate_with_url(self, user_id, url):
         """
         Navigates the browser to the specified URL for the given user_id.
         """

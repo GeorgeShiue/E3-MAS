@@ -37,13 +37,14 @@ class ExecutionAgent():
     def __init__(self):
         self.execution_tools = ExecutionTool()
         self.planner = self.create_planner_agent()
-        self.executor = AgentFactory.create_react_agent_with_yaml("Executor", self.execution_tools.tool_dict)
+        self.executor = self.create_executor_agent()
+        self.web_executor = self.create_web_executor_agent()
         self.replanner = self.create_replanner_agent()
         self.solver = self.create_solver_agent()
-
+        
     def create_planner_agent(self):
         # * Plannger Agent 使用 ChatPromptTemplate.from_messages() 搭配 with_structured_output(Plan) 實現
-        llm_config, planner_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Planner")
+        llm_config, planner_system_prompt, tool_list = AgentFactory.extract_agent_parameter_yaml("Planner")
 
         planner_llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
         planner_prompt = ChatPromptTemplate.from_messages(
@@ -58,9 +59,17 @@ class ExecutionAgent():
         planner = planner_prompt | planner_llm.with_structured_output(self.Plan) # 限制使用特定模板回答問題
         return planner
 
+    def create_executor_agent(self):
+        executor = AgentFactory.create_react_agent_with_yaml("Executor", self.execution_tools.tool_dict)
+        return executor
+    
+    def create_web_executor_agent(self):
+        web_executor = AgentFactory.create_react_agent_with_yaml("Web Executor", self.execution_tools.tool_dict)
+        return web_executor
+
     def create_replanner_agent(self):
         # * Replanner Agent 使用 ChatPromptTemplate.from_template() 搭配 with_structured_output(Act) 實現
-        llm_config, replanner_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Replanner")
+        llm_config, replanner_system_prompt, tool_list = AgentFactory.extract_agent_parameter_yaml("Replanner")
 
         replanner_llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"]) # ! Replanner需要使用gpt-4o才不會一直call tools
         replanner_prompt = ChatPromptTemplate.from_template(replanner_system_prompt)
@@ -72,7 +81,7 @@ class ExecutionAgent():
 
     def create_solver_agent(self):
         # * Solver Agent 使用 ChatPromptTemplate.from_template() 實現        
-        llm_config, solver_system_prompt, tool_list = AgentFactory.extract_agent_parameter("Solver")
+        llm_config, solver_system_prompt, tool_list = AgentFactory.extract_agent_parameter_yaml("Solver")
 
         solver_llm = ChatOpenAI(model=llm_config["model"])
         solver_prompt = ChatPromptTemplate.from_template(solver_system_prompt)
@@ -110,8 +119,8 @@ if __name__ == "__main__":
     start_time = time.time()
 
     execution_agent = ExecutionAgent()
-    evaluation_agent = EvaluationAgent()
-    evolution_agent = EvolutionAgent()
+    # evaluation_agent = EvaluationAgent()
+    # evolution_agent = EvolutionAgent()
 
     end_time = time.time()
 
