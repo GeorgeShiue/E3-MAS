@@ -1,0 +1,6 @@
+Step 1. function_name: 'navigate_with_url', parameters: '{{"url":"https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest"}}' E1 = [Output of the function]
+Step 2. function_name: 'input_text_with_label', parameters: '{{"label_text":"Account","text":"user_account","privacy":"Account"}}' E2 = [Output of the function]
+Step 3. function_name: 'input_text_with_label', parameters: '{{"label_text":"Password","text":"user_password","privacy":"Password"}}' E3 = [Output of the function]
+Step 4. function_name: 'click_button_with_text', parameters: '{{"text":"Login to Portal"}}' E4 = [Output of the function]
+Step 5. function_name: 'click_button_with_text', parameters: '{{"text":"Go to"}}'E5 = [Output of the function]
+Step 6. function_name: 'click_button_with_text', parameters: '{{"text":"申請"}}' E6 = [Output of the function]

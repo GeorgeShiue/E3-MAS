@@ -33,14 +33,6 @@ class AgentFactory():
         print(f"{agent_name}_prompt: \n{prompt}")
         print()
 
-        if 'none' in tool_list:
-            print(f"{agent_name} does not have any tools.")
-        else:
-            print(f"{agent_name}_tool_list: ")
-            for tool in tool_list:
-                print(tool)
-        print()
-
     @staticmethod
     def create_react_agent_with_yaml(agent_name, tool_dicts=None, response_format=None):
         llm_config, prompt, tool_list = AgentFactory.extract_agent_parameter_yaml(agent_name)
@@ -53,12 +45,21 @@ class AgentFactory():
         
             tool_dicts = {**execution_tools.tool_dict, **evaluation_tools.tool_dict, **evolution_tools.tool_dict}  # merge all tool dicts
         
-        tool_list = [tool_dicts[tool] for tool in tool_list if tool in tool_dicts] # select tools from tool_dicts
+        selected_tool_list = [tool_dicts[tool] for tool in tool_list if tool in tool_dicts] # select tools from tool_dicts
 
         llm = ChatOpenAI(model=llm_config["model"], temperature=llm_config["temperature"])
-        agent = create_react_agent(llm, tool_list, prompt=prompt, response_format=response_format)
+        agent = create_react_agent(llm, selected_tool_list, prompt=prompt, response_format=response_format)
 
-        AgentFactory.print_agent_parameter(agent_name)
+        AgentFactory.print_agent_parameter(agent_name) # print llm_config, prompt
+
+        # print selected tools
+        if 'none' in selected_tool_list:
+            print(f"{agent_name} does not have any tools.")
+        else:
+            print(f"{agent_name}_tool_list: ")
+            for tool in selected_tool_list:
+                print(tool.name)
+        print()
 
         return agent
     

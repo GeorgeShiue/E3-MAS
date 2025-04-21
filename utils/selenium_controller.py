@@ -16,9 +16,32 @@ class SeleniumController:
         self.used_ports = set()
         self.browser_list = []
 
-    def __del__(self):
+    # ! selenium contoller 的解構子無法使用，Import Error
+    # def __del__(self):
+    #     """
+    #     Destructor to ensure all containers are stopped and removed.
+    #     """
+    #     try:
+    #         print("Cleaning up all containers...")
+    #         containers = self.client.containers.list()
+    #         print(f"Found {len(containers)} containers.")
+    #         for container in containers:
+    #             if "selenium/standalone-firefox:latest" in container.image.tags:
+    #                 container.stop()
+    #                 container.remove()
+    #                 print(f"Container {container.name} has been stopped and removed.")
+    #         self.port_list.clear()
+    #         self.used_ports.clear()
+    #     # except ImportError:
+    #     #     # 捕獲無法 import 的情況（Python 關閉中）
+    #     #     # 此處不輸出訊息，因為 Python 關閉中輸出可能不會顯示
+    #     #     pass
+    #     except Exception as e:
+    #         print(f"Error during cleanup: {e}")
+
+    def clean_containers(self):
         """
-        Destructor to ensure all containers are stopped and removed.
+        Cleans up all containers and resets the port list.
         """
         try:
             print("Cleaning up all containers...")
@@ -144,7 +167,7 @@ class SeleniumController:
         if browser is None:
             raise Exception(f"No browser found for user_id {user_id}")
         
-        file_path = "screenshots/" + file_name + ".png"
+        file_path = "Outputs/screenshots/" + file_name + ".png"
         browser.save_screenshot(file_path)
         print(f"Screenshot saved for user_id {user_id} at {file_path}")
         return f"Screenshot saved for user_id {user_id} at {file_path}"

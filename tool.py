@@ -56,12 +56,6 @@ class WebOperationTool():
             self.current_screenshot_name = f"website_screenshot_{self.current_screenshot_count}"
             result = self.selenium_controller.screen_shot(self.current_user_id, self.current_screenshot_name)
             return result
-        
-        @tool
-        def create_browser() -> str:
-            """Create a new browser session."""
-            result = self.selenium_controller.create_browser(self.current_user_id)
-            return result
 
         @tool
         @auto_screenshot
@@ -165,7 +159,6 @@ class WebOperationTool():
             return result
         
         self.tool_list = [
-            create_browser,
             navigate_with_url,
             get_html_content,
             input_text_with_label,
@@ -178,15 +171,20 @@ class WebOperationTool():
             click_span_with_aria_label,
             upload_file_with_id,
         ]
+
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
 
+
+    def create_browser(self) -> str:
+        """Create a new browser session."""
+        result = self.selenium_controller.create_browser(self.current_user_id)
+        return result
 
 
 # TODO 可以創建一個All Tools class
 class ExecutionTool():
     def __init__(self):
         # define tool list
-        self.web_operation_tool = WebOperationTool()
         self.tool_list = [
             website_info_retriever,
             website_links_crawler,
@@ -196,6 +194,7 @@ class ExecutionTool():
 
         # define tool dict from tool list
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
+
 
 class EvaluationTool():
     def __init__(self):

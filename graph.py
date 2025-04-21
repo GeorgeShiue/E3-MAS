@@ -11,7 +11,6 @@ from agent import ExecutionAgent
 
 
 class ExecutionGraph():
-    # Define Graph State
     class PlanExecute(TypedDict):
         input: str
         plan: List[str]
@@ -21,15 +20,20 @@ class ExecutionGraph():
 
     def __init__(self):
         self.agent = ExecutionAgent()
-        self.app = self.create_graph()
-        self.name = "ExecutionGraph"
+        self.graph_name = "Execution Graph"
+        self.graph_state = self.PlanExecute
+        self.graph = StateGraph(self.graph_state)
+        self.app = self.create_execution_graph()
 
-    def save_graph_mermaid(self):
+        self.save_graph_mermaid()
+       
+
+    def save_graph_mermaid(self): # TODO 可以歸入utils
 
         graph_bytes = self.app.get_graph(xray=True).draw_mermaid_png()
         
         # save to Outputs folder
-        output_file_path = os.path.join("Outputs", self.name) + ".png"
+        output_file_path = os.path.join("Outputs", self.graph_name) + ".png"
         with BytesIO(graph_bytes) as byte_stream:
             image = Image.open(byte_stream)
             image.save(output_file_path, format="PNG")
@@ -55,7 +59,8 @@ class ExecutionGraph():
         task = plan[0]
         task_formatted = f"""For the following plan:
     {plan_str}\n\nYou are tasked with executing step {1}, {task}."""
-        agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
+        # agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
+        agent_response = await self.agent.web_executor.ainvoke({"messages": [("user", task_formatted)]}) # test web executor agent
         state["history"].append(("Executor", (task, agent_response["messages"][-1].content)))
 
         return {
@@ -97,9 +102,8 @@ class ExecutionGraph():
         
 
 
-    def create_graph(self):
-        # Create Graph
-        graph = StateGraph(self.PlanExecute)
+    def create_execution_graph(self):
+        graph = self.graph
 
         # TODO node定義可以再更抽象化
         graph.add_node("planner", self.plan_step)
@@ -119,32 +123,30 @@ class ExecutionGraph():
         graph.add_edge("solver", END)
 
         app = graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
+
+        print(f"{self.graph_name} is created.")
         return app
     
 
 if __name__ == "__main__":
-    # load api key from .env file
     import os
     from dotenv import load_dotenv
+    import asyncio
+    import nest_asyncio
+    import time
+    import shutil
     
     load_dotenv()
     api_key = os.getenv("API_KEY")
     os.environ["OPENAI_API_KEY"] = api_key
 
-    # import time
-
-    # start_time = time.time()
+    start_time = time.time()
 
     execution_graph = ExecutionGraph()
-    # execution_graph.save_graph_mermaid()
 
-    # end_time = time.time()
-
-    # print(f"ExecutionGraph created in {end_time - start_time} seconds")
-
-    import asyncio
-    import nest_asyncio
-    import time
+    if os.path.exists("Outputs/screenshots"):
+        shutil.rmtree("Outputs/screenshots")
+    os.makedirs("Outputs/screenshots", exist_ok=True)
 
     with open("Outputs/execution_chat_log.txt", "w", encoding='utf-8') as f:
         f.write("")
@@ -156,18 +158,21 @@ if __name__ == "__main__":
     # Who is the headmaster of National Central University in Taiwan?
     # Summarize the content of the 111 Academic Affairs Regulations.
     # Please help me gather information related to scholarship applications.
-    # Please help me fill out the leave application on the school website.
-    config = {"recursion_limit": 30}
+    # Please help me apply leave application.
+    config = {"recursion_limit": 50}
     inputs = {
-        "input": "Please help me gather information related to scholarship applications.",
+        "input": "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.",
         "history": [], # 初始化儲存History的list
     }
     write_to_chat_log(f"User Query:\n{inputs['input']}\n\n")
 
-    # tool_dict["create_browser"].invoke(input=None)
-
     nest_asyncio.apply()
     loop = asyncio.get_event_loop()
+
+    if execution_graph.agent.create_browser_thread.is_alive():
+        print("browser is starting...")
+        execution_graph.agent.create_browser_thread.join()
+    print("browser is ready")
 
     async def run_graph():
         async for event in execution_graph.app.astream(inputs, config=config):
@@ -181,10 +186,10 @@ if __name__ == "__main__":
                     
                     write_to_chat_log("\n")
         
-
-    start_time = time.time()
     loop.run_until_complete(run_graph())
+
     end_time = time.time()
 
     print(f"Execution Team Run Time: {end_time - start_time} seconds")
-    # del tools.selenium_controller
+    
+    execution_graph.agent.web_operation_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
