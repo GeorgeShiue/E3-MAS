@@ -76,7 +76,8 @@ class WebExecutionTool():
         def input_text_with_label(label_text: str, input_text: str, privacy: str = "None") -> str:
             """
             Inputs text into the input element specified by the text of the label.
-            Replace the text argument with the external information when the privacy parameter is not "None".
+            When using this tool to input privacy information such as account or password, the privacy parameter should be set to "Account" or "Password".
+            This tool wiill replace the input_text argument with the external information when the privacy parameter is not "None".
             """
             if privacy == "Account":
                 input_text = self.privacy_info[self.current_user_id]["account"]
@@ -90,7 +91,8 @@ class WebExecutionTool():
         def input_text_with_name(name: str, input_text: str, privacy: str = "None") -> str:
             """
             Inputs text into the input element specified by the name.
-            Replace the text argument with the external information when the privacy parameter is not "None".
+            When using this tool to input privacy information such as account or password, the privacy parameter should be set to "Account" or "Password".
+            This tool will replace the input_text argument with the external information when the privacy parameter is not "None".
             """
             if privacy == "Account":
                 input_text = self.privacy_info[self.current_user_id]["account"]

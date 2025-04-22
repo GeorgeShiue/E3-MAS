@@ -142,12 +142,12 @@ if __name__ == "__main__":
     replanner = execution_agent.replanner
     solver = execution_agent.solver
 
+    response = planner.invoke({"user_input": [("user", "Please help me apply leave application.")]})
+    for step in response.steps:
+        print(step)
+
     if execution_agent.executor_name == "Web Executor":
         execution_agent.wait_browser_init()
-
-    # response = planner.invoke({"user_input": [("user", "Please help me apply leave application.")]})
-    # for step in response.steps:
-    #     print(step)
     
     # responses = []
 
@@ -165,6 +165,6 @@ if __name__ == "__main__":
 
     print(f"Execution time: {end_time - start_time} seconds")
 
+    # TODO 清除過程使用Threading
     if execution_agent.executor_name == "Web Executor":
         execution_agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
-    # TODO 清除過程使用Threading

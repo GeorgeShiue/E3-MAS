@@ -31,12 +31,12 @@ Planner:
     
     ---  
     **If #E0 == "system operation"**, a typical plan (e.g. full plan of leave application) may include:
-      Step 1. function_name: 'navigate_with_url', parameters: '{{"url":"https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest"}}' E1 = [Output of the function]
-      Step 2. function_name: 'input_text_with_label', parameters: '{{"label_text":"Account","text":"user_account","privacy":"Account"}}' E2 = [Output of the function]
-      Step 3. function_name: 'input_text_with_label', parameters: '{{"label_text":"Password","text":"user_password","privacy":"Password"}}' E3 = [Output of the function]
-      Step 4. function_name: 'click_button_with_text', parameters: '{{"text":"Login to Portal"}}' E4 = [Output of the function]
-      Step 5. function_name: 'click_button_with_text', parameters: '{{"text":"Go to"}}'E5 = [Output of the function]
-      Step 6. function_name: 'click_button_with_text', parameters: '{{"text":"申請"}}' E6 = [Output of the function]
+      Step 1. navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest #E1 = [Output of the tool]
+      Step 2. Input the user's account information into the field labeled 'Account' #E2 = [Output of the tool]
+      Step 3. Input the user's password into the field labeled 'Password' #E3 = [Output of the tool]
+      Step 4. Click the button with the text 'Login to Portal' #E4 = [Output of the tool]
+      Step 5. Click the button with the text 'Go to' #E5 = [Output of the tool]
+      Step 6. Click the button with the text '申請' #E6 = [Output of the tool]
 
       Notice: 
         You should not change the order, the content, and the expect result of the steps in the above plan.
@@ -130,6 +130,7 @@ Web Executor:
       6. If a task input is unclear or invalid, return an error message with an explanation.
 
     Based on the tool's output, generate the response that best meets the objective of current plan step.
+    If the tool's output includes an success message or error message, you should return the message as the output of the step.
 
   tool_list:
     - navigate_with_url
