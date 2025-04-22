@@ -1,14 +1,17 @@
 import os
 import sys
+from io import BytesIO
+from PIL import Image
 
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+from langgraph.graph.state import CompiledStateGraph
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-from tool import ExecutionTool, EvaluationTool, EvolutionTool, read_agents_parameter_yaml
+from tool import SearchExecutionTool, WebExecutionTool, EvaluationTool, EvolutionTool, read_agents_parameter_yaml
 
 class AgentFactory():
     @staticmethod
@@ -39,11 +42,12 @@ class AgentFactory():
 
         # if tool_dicts not provided, look for tools in all tools
         if tool_dicts is None:
-            execution_tools = ExecutionTool()
-            evaluation_tools = EvaluationTool()
-            evolution_tools = EvolutionTool()
+            search_execution_tool = SearchExecutionTool()
+            web_execution_tool = WebExecutionTool()
+            evaluation_tool = EvaluationTool()
+            evolution_tool = EvolutionTool()
         
-            tool_dicts = {**execution_tools.tool_dict, **evaluation_tools.tool_dict, **evolution_tools.tool_dict}  # merge all tool dicts
+            tool_dicts = {**search_execution_tool.tool_dict, **web_execution_tool.tool_dict, **evaluation_tool.tool_dict, **evolution_tool.tool_dict}  # merge all tool dicts
         
         selected_tool_list = [tool_dicts[tool] for tool in tool_list if tool in tool_dicts] # select tools from tool_dicts
 
@@ -62,7 +66,20 @@ class AgentFactory():
         print()
 
         return agent
-    
+
+class GraphFactory():
+    @staticmethod
+    def save_graph_mermaid(app: CompiledStateGraph, graph_name): # TODO 可以歸入utils
+
+        graph_bytes = app.get_graph(xray=True).draw_mermaid_png()
+        
+        # save to Outputs folder
+        output_file_path = os.path.join("Outputs", graph_name) + ".png"
+        with BytesIO(graph_bytes) as byte_stream:
+            image = Image.open(byte_stream)
+            image.save(output_file_path, format="PNG")
+        
+        print(f"Graph mermaid image saved to: {output_file_path}")
 
 
 if __name__ == "__main__":

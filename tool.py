@@ -23,7 +23,7 @@ EXECUTION_CHAT_LOG_FILEPATH = "Docs/execution_chat_log_archive.txt"
 
 
 
-class WebOperationTool():
+class WebExecutionTool():
     def __init__(self, user_id = "1130"):
         self.selenium_controller = SeleniumController()
         self.current_user_id = user_id
@@ -68,7 +68,7 @@ class WebOperationTool():
         def get_html_content() -> str:
             """Get the HTML content of the current web page to gain information to be used in the current step."""
             result = self.selenium_controller.get_content(self.current_user_id)
-            print(result)
+            print("HTML content of the current web page is retrieved.")
             return result
 
         @tool
@@ -182,7 +182,7 @@ class WebOperationTool():
 
 
 # TODO 可以創建一個All Tools class
-class ExecutionTool():
+class SearchExecutionTool():
     def __init__(self):
         # define tool list
         self.tool_list = [
@@ -434,7 +434,7 @@ def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
 
 
 if __name__ == "__main__":
-    web_operation_tool = WebOperationTool()
+    web_operation_tool = WebExecutionTool()
     
     web_operation_tool.tool_dict["create_browser"].invoke(input=None)
     web_operation_tool.tool_dict["navigate"].invoke({"url": "https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest"})

@@ -1,13 +1,11 @@
 import operator
-from io import BytesIO
 from typing import Annotated, Any, List, Tuple
 
-from PIL import Image
 from typing_extensions import TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from agent import ExecutionAgent
-
+from utils.factory import GraphFactory
 
 
 class ExecutionGraph():
@@ -18,32 +16,12 @@ class ExecutionGraph():
         response: str
         history: List[Tuple[str, Any]]
 
-    def __init__(self):
-        self.agent = ExecutionAgent()
-        self.graph_name = "Execution Graph"
-        self.graph_state = self.PlanExecute
-        self.graph = StateGraph(self.graph_state)
-        self.app = self.create_execution_graph()
+    def __init__(self, executor_name):
+        self.executor_name = executor_name
+        self.agent = ExecutionAgent(self.executor_name)
+        self.graph = self.create_execution_graph()
 
-        self.save_graph_mermaid()
-       
-
-    def save_graph_mermaid(self): # TODO 可以歸入utils
-
-        graph_bytes = self.app.get_graph(xray=True).draw_mermaid_png()
-        
-        # save to Outputs folder
-        output_file_path = os.path.join("Outputs", self.graph_name) + ".png"
-        with BytesIO(graph_bytes) as byte_stream:
-            image = Image.open(byte_stream)
-            image.save(output_file_path, format="PNG")
-
-        # display(Image(execution_app.get_graph(xray=True).draw_mermaid_png()))
-        
-        print(f"Graph mermaid image saved to: {output_file_path}")
-
-    # Define Agent Node Function
-    # * 不同 Agent Node Function 各自定義以實現訊息流區隔
+    # * Define Agent Node Function, 不同 Agent Node Function 各自定義以實現訊息流區隔
     async def plan_step(self, state: PlanExecute):
         plan = await self.agent.planner.ainvoke({"user_input": [("user", state["input"])]}) # 對應到planner system prompt中的{user_input}
         state["history"].append(("Planner", plan.steps)) # 將plan的步驟加入history中
@@ -59,8 +37,7 @@ class ExecutionGraph():
         task = plan[0]
         task_formatted = f"""For the following plan:
     {plan_str}\n\nYou are tasked with executing step {1}, {task}."""
-        # agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
-        agent_response = await self.agent.web_executor.ainvoke({"messages": [("user", task_formatted)]}) # *test web executor agent
+        agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
         state["history"].append(("Executor", (task, agent_response["messages"][-1].content)))
 
         return {
@@ -91,8 +68,6 @@ class ExecutionGraph():
         response = await self.agent.solver.ainvoke({"user_input": state["input"], "planning_history": state["history"]})
         return {"response": response.content, "history": state["history"]}
 
-
-
     # Define Conditional Edge Function
     def should_end(self, state: PlanExecute):
         if "response" in state and state["response"]:
@@ -100,39 +75,37 @@ class ExecutionGraph():
         else:
             return "executor"
         
-
-
     def create_execution_graph(self):
-        graph = self.graph
+        clean_graph = StateGraph(self.PlanExecute)
 
         # TODO node定義可以再更抽象化
-        graph.add_node("planner", self.plan_step)
-        graph.add_node("executor", self.execute_step)
-        graph.add_node("replanner", self.replan_step)
-        graph.add_node("solver", self.solve_step)
+        clean_graph.add_node("planner", self.plan_step)
+        clean_graph.add_node("executor", self.execute_step)
+        clean_graph.add_node("replanner", self.replan_step)
+        clean_graph.add_node("solver", self.solve_step)
 
-        graph.add_edge(START, "planner")
-        graph.add_edge("planner", "executor")
-        graph.add_edge("executor", "replanner")
-        graph.add_conditional_edges(
+        clean_graph.add_edge(START, "planner")
+        clean_graph.add_edge("planner", "executor")
+        clean_graph.add_edge("executor", "replanner")
+        clean_graph.add_conditional_edges(
             "replanner",
             # Next, we pass in the function that will determine which node is called next.
             self.should_end,
             ["executor", "solver"],
         )
-        graph.add_edge("solver", END)
+        clean_graph.add_edge("solver", END)
 
-        app = graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
+        graph = clean_graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
+        GraphFactory.save_graph_mermaid(graph, "Execution Graph") # 測試GraphFactory的save_graph_mermaid功能
+        print("Execution Graph is created.\n")
 
-        print(f"{self.graph_name} is created.")
-        return app
+        return graph
     
 
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
     import asyncio
-    import nest_asyncio
     import time
     import shutil
     
@@ -140,56 +113,64 @@ if __name__ == "__main__":
     api_key = os.getenv("API_KEY")
     os.environ["OPENAI_API_KEY"] = api_key
 
-    start_time = time.time()
+    executor_name = "Web Executor" # "Search Executor" or "Web Executor"
+    execution_graph = ExecutionGraph(executor_name)
 
-    execution_graph = ExecutionGraph()
+    screenshots_folder_path = os.path.join("Outputs", "screenshots")
+    execution_chat_log_path = os.path.join("Outputs", "execution_chat_log.txt")
 
-    if os.path.exists("Outputs/screenshots"):
-        shutil.rmtree("Outputs/screenshots")
-    os.makedirs("Outputs/screenshots", exist_ok=True)
+    loop = asyncio.new_event_loop()
 
-    with open("Outputs/execution_chat_log.txt", "w", encoding='utf-8') as f:
-        f.write("")
+    if os.path.exists(screenshots_folder_path):
+        shutil.rmtree(screenshots_folder_path)
+    os.makedirs(screenshots_folder_path, exist_ok=True)
 
-    def write_to_chat_log(content):
-        with open("Outputs/execution_chat_log.txt", "a", encoding='utf-8') as f:
+    def clear_chat_log(chat_log_path):
+        with open(chat_log_path, "w", encoding='utf-8') as f:
+            f.write("")
+
+    def write_to_chat_log(chat_log_path,content):
+        with open(chat_log_path, "a", encoding='utf-8') as f:
             f.write(content)
+
+    async def run_graph_with_graph_class(graph_class: ExecutionGraph, user_input, chat_log_path):
+        config = {"recursion_limit": 30}
+        inputs = {
+            "input": user_input,
+            "history": [], # 初始化儲存History的list
+        }
+
+        clear_chat_log(chat_log_path)
+        write_to_chat_log(chat_log_path, f"User Query:\n{inputs['input']}\n\n")
+
+        # *若是Execution Team 的 Web Executor，則等待瀏覽器初始化
+        if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
+            graph_class.agent.wait_browser_init()
+
+        async for event in graph_class.graph.astream(inputs, config=config):
+            for agent, state in event.items():
+                if agent != "__end__":
+                    write_to_chat_log(chat_log_path, f"{agent}:\n")
+
+                    for key, value in state.items():
+                        if (key != "history"):
+                            write_to_chat_log(chat_log_path, f"{key}: {value}\n")
+                    
+                    write_to_chat_log(chat_log_path, "\n")
 
     # Who is the headmaster of National Central University in Taiwan?
     # Summarize the content of the 111 Academic Affairs Regulations.
     # Please help me gather information related to scholarship applications.
     # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-    config = {"recursion_limit": 30}
-    inputs = {
-        "input": " Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.",
-        "history": [], # 初始化儲存History的list
-    }
-    write_to_chat_log(f"User Query:\n{inputs['input']}\n\n")
+    user_input = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button."
 
-    nest_asyncio.apply()
-    loop = asyncio.get_event_loop()
-
-    if execution_graph.agent.create_browser_thread.is_alive():
-        print("browser is starting...")
-        execution_graph.agent.create_browser_thread.join()
-    print("browser is ready")
-
-    async def run_graph():
-        async for event in execution_graph.app.astream(inputs, config=config):
-            for agent, state in event.items():
-                if agent != "__end__":
-                    write_to_chat_log(f"{agent}:\n")
-
-                    for key, value in state.items():
-                        if (key != "history"):
-                            write_to_chat_log(f"{key}: {value}\n")
-                    
-                    write_to_chat_log("\n")
-        
-    loop.run_until_complete(run_graph())
-
+    print("Execution Team start running...\n")
+    
+    start_time = time.time()
+    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path))
     end_time = time.time()
 
-    print(f"Execution Team Run Time: {end_time - start_time} seconds")
+    print(f"\nExecution Team Run Time: {end_time - start_time} seconds\n")
     
-    execution_graph.agent.web_operation_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+    if execution_graph.agent.executor_name == "Web Executor":
+        execution_graph.agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
