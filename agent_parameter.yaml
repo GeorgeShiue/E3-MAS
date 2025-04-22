@@ -268,7 +268,7 @@ Evaluator:
       - Step ID or Summary: [Short identifier or action]
       - Rubric Reference: [Step number or fallback rule applied]
       - Execution Summary: [What was actually done and what was the result]
-      - Score: Fully Met / Partially Met / Not Met
+      - Score: 1(Fully Met) / 0.5(Partially Met) / 0(Not Met)
       - Justification: [Short explanation referencing the rubric and chat log]
       - Improvement Suggestions: [Suggestions for how this step could be improved.]
 

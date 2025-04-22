@@ -379,7 +379,7 @@ def read_user_query_and_plan() -> str:
                 break
             content.append(line)
 
-    # print("User input and plan:\n " + ''.join(content))
+    print("User query and plan have been retrieved.")
     return ''.join(content)
 
 @tool
@@ -397,11 +397,11 @@ def read_execution_chat_log() -> str:
             if start:
                 content.append(line)
     
-    # print("Execution chat log:\n " + ''.join(content))
+    print("Execution chat log has been retrieved.")
     return ''.join(content)
 
 @tool
-def read_evaluation_result():
+def read_evaluation_result() -> str:
     """Read the evaluation result of execution team."""
     evaluator_content = []
     is_evaluator_section = False
@@ -415,6 +415,7 @@ def read_evaluation_result():
             elif is_evaluator_section:
                 evaluator_content.append(line.strip()) # 如果是 evaluator: 區段，繼續擷取內容
 
+    print("Evaluation result has been retrieved.")
     return "\n".join(evaluator_content)
 
 @tool
@@ -422,6 +423,7 @@ def read_execution_team_agents_prompt(agent_name) -> str:
     """Read the specified agent's system prompt. The agent is one of the member in execution team."""
     agents_parameter = read_agents_parameter_yaml()
     
+    print(f"{agent_name} system prompt has been retrieved.")
     return agents_parameter[agent_name]["prompt"]
 
 @tool
@@ -430,6 +432,12 @@ def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
     
     with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
         f.write(f"{agent_name}:\n{updated_prompt}")
+
+    # agents_parameter = read_agents_parameter_yaml()
+    # agents_parameter[agent_name]["prompt"] = updated_prompt
+
+    # with open('Outputs/agents_parameter.yaml', 'w', encoding="utf-8") as yaml_file:
+    #     yaml.dump(agents_parameter, yaml_file)
 
     return f"{agent_name} updated prompt saved successfully."
 

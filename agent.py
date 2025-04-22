@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from tool import SearchExecutionTool, WebExecutionTool
+from tool import SearchExecutionTool, WebExecutionTool, EvaluationTool, EvolutionTool
 from utils.factory import AgentFactory
 
 class ExecutionAgent():
@@ -110,9 +110,25 @@ class ExecutionAgent():
         print("browser is ready")
 
 class EvaluationAgent():
+    class EvaluatorResponse(BaseModel):
+        """Return a list of score for each step in order."""
+
+        scores: List[float] = Field(
+            description="A list of scores for each step in order.",
+        )
+
     def __init__(self):
-        self.critic = AgentFactory.create_react_agent_with_yaml("Critic")
-        self.evaluator = AgentFactory.create_react_agent_with_yaml("Evaluator")
+        self.evaluation_tool = EvaluationTool()
+        self.critic = self.create_critic_agent()
+        self.evaluator = self.create_evaluator_agent()
+
+    def create_critic_agent(self):
+        critic = AgentFactory.create_react_agent_with_yaml("Critic", self.evaluation_tool.tool_dict)
+        return critic
+    
+    def create_evaluator_agent(self):
+        evaluator = AgentFactory.create_react_agent_with_yaml("Evaluator", self.evaluation_tool.tool_dict, self.EvaluatorResponse)
+        return evaluator
 
 class EvolutionAgent():
     def __init__(self):
@@ -128,26 +144,26 @@ if __name__ == "__main__":
 
     from utils.selenium_controller import SeleniumController
 
-    start_time = time.time()
-
     load_dotenv()
     api_key = os.getenv("API_KEY")
     os.environ["OPENAI_API_KEY"] = api_key
 
-    executor_name = "Web Executor" # "Search Executor" or "Web Executor"
-    execution_agent = ExecutionAgent(executor_name)
+    start_time = time.time()
 
-    planner = execution_agent.planner
-    executor = execution_agent.executor
-    replanner = execution_agent.replanner
-    solver = execution_agent.solver
+    # *Test Execution Agent
 
-    response = planner.invoke({"user_input": [("user", "Please help me apply leave application.")]})
-    for step in response.steps:
-        print(step)
+    # executor_name = "Web Executor" # "Search Executor" or "Web Executor"
+    # execution_agent = ExecutionAgent(executor_name)
 
-    if execution_agent.executor_name == "Web Executor":
-        execution_agent.wait_browser_init()
+    # planner = execution_agent.planner
+    # executor = execution_agent.executor
+
+    # response = planner.invoke({"user_input": [("user", "Please help me apply leave application.")]})
+    # for step in response.steps:
+    #     print(step)
+
+    # if execution_agent.executor_name == "Web Executor":
+    #     execution_agent.wait_browser_init()
     
     # responses = []
 
@@ -161,10 +177,16 @@ if __name__ == "__main__":
     # for response in responses:
     #     print("Response: " + response["messages"][-1].content)
 
+    # *Test Evaluation Agent
+
+    evaluation_agent = EvaluationAgent()
+    critic = evaluation_agent.critic
+    evaluator = evaluation_agent.evaluator
+
     end_time = time.time()
 
     print(f"Execution time: {end_time - start_time} seconds")
 
     # TODO 清除過程使用Threading
-    if execution_agent.executor_name == "Web Executor":
-        execution_agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+    # if execution_agent.executor_name == "Web Executor":
+    #     execution_agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除

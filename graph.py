@@ -1,10 +1,10 @@
 import operator
 from typing import Annotated, Any, List, Tuple
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Union
 from langgraph.graph import END, START, StateGraph
 
-from agent import ExecutionAgent
+from agent import ExecutionAgent, EvaluationAgent, EvolutionAgent
 from utils.factory import GraphFactory
 
 
@@ -101,49 +101,92 @@ class ExecutionGraph():
 
         return graph
     
+class EvaluationGraph():
+    class Evaluation(TypedDict):
+        input: str
+        rubric: str
+        result: str
+        scores: List[float]
 
+    def __init__(self):
+        self.agent = EvaluationAgent()
+        self.graph = self.create_evaluation_graph()
+    
+    async def critic_step(self, state: Evaluation):
+        response = await self.agent.critic.ainvoke({"messages": [("user", state["input"])]})
+        state["rubric"] = response["messages"][-1].content # 儲存評估標準到state內
+        return {
+            "rubric": state["rubric"],
+        }
+
+    async def evaluator_step(self, state: Evaluation):
+        response = await self.agent.evaluator.ainvoke({"messages": [("user", state["rubric"])]})
+        state["result"] = response["messages"][-1].content # 儲存評估結果到state內
+        state["scores"] = response["structured_response"].scores # 儲存評估分數到state內
+        return {
+            "result": state["result"],
+            "scores": state["scores"],
+        }
+
+    def create_evaluation_graph(self):
+        clean_graph = StateGraph(self.Evaluation)
+
+        clean_graph.add_node("critic", self.critic_step)
+        clean_graph.add_node("evaluator", self.evaluator_step)
+
+        clean_graph.add_edge(START, "critic")
+        clean_graph.add_edge("critic", "evaluator")
+        clean_graph.add_edge("evaluator", END)
+
+        graph = clean_graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
+        # GraphFactory.save_graph_mermaid(graph, "Evaluation Graph") # 測試GraphFactory的save_graph_mermaid功能
+        print("Evaluation Graph is created.\n")
+        
+        return graph
+
+        
 if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
     import asyncio
-    import time
+    import os
     import shutil
+    import time
+    from dotenv import load_dotenv
     
     load_dotenv()
     api_key = os.getenv("API_KEY")
     os.environ["OPENAI_API_KEY"] = api_key
 
     executor_name = "Web Executor" # "Search Executor" or "Web Executor"
-    execution_graph = ExecutionGraph(executor_name)
+    # execution_graph = ExecutionGraph(executor_name) # Init Execution Team
+    evaluation_graph = EvaluationGraph() # Init Evaluation Team
 
-    screenshots_folder_path = os.path.join("Outputs", "screenshots")
+    screenshot_folder_path = os.path.join("Outputs", "screenshots")
     execution_chat_log_path = os.path.join("Outputs", "execution_chat_log.txt")
+    evaluation_chat_log_path = os.path.join("Outputs", "evaluation_chat_log.txt")
 
-    loop = asyncio.new_event_loop()
-
-    if os.path.exists(screenshots_folder_path):
-        shutil.rmtree(screenshots_folder_path)
-    os.makedirs(screenshots_folder_path, exist_ok=True)
+    # if os.path.exists(screenshot_folder_path):
+    #     shutil.rmtree(screenshot_folder_path)
+    # os.makedirs(screenshot_folder_path, exist_ok=True)
 
     def clear_chat_log(chat_log_path):
         with open(chat_log_path, "w", encoding='utf-8') as f:
             f.write("")
 
-    def write_to_chat_log(chat_log_path,content):
+    def write_to_chat_log(chat_log_path, content):
         with open(chat_log_path, "a", encoding='utf-8') as f:
             f.write(content)
 
-    async def run_graph_with_graph_class(graph_class: ExecutionGraph, user_input, chat_log_path):
+    async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_input, chat_log_path):
         config = {"recursion_limit": 30}
         inputs = {
             "input": user_input,
-            "history": [], # 初始化儲存History的list
+            "history": [],
         }
 
         clear_chat_log(chat_log_path)
         write_to_chat_log(chat_log_path, f"User Query:\n{inputs['input']}\n\n")
 
-        # *若是Execution Team 的 Web Executor，則等待瀏覽器初始化
+        # *若是 Execution Team 的 Web Executor，則等待瀏覽器初始化
         if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
             graph_class.agent.wait_browser_init()
 
@@ -164,13 +207,16 @@ if __name__ == "__main__":
     # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
     user_input = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button."
 
-    print("Execution Team start running...\n")
-    
+    module_name = "Execution Team" # Execution Team or Evaluation Team or Evolution Team
+    print(f"{module_name} start running...\n")
+
     start_time = time.time()
-    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path))
+    loop = asyncio.new_event_loop()
+    # loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path)) # *Test Execution Team
+    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path)) # *Test Evaluation Team
     end_time = time.time()
 
-    print(f"\nExecution Team Run Time: {end_time - start_time} seconds\n")
-    
-    if execution_graph.agent.executor_name == "Web Executor":
-        execution_graph.agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+    print(f"\n{module_name} Run Time: {end_time - start_time} seconds\n")
+
+    # if execution_graph.agent.executor_name == "Web Executor":
+    #     execution_graph.agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
