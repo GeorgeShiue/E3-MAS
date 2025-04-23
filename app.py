@@ -86,8 +86,13 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
         write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
 
 def run_app(user_input, executor_name, task, epoch):
+    # input(f"Press Enter to start initializing environment and Execution Team for {task} in epoch {epoch}...")
+    # print(f"Initializing environment and Execution Team for {task} in epoch {epoch}\n")
+
+    execution_graph = ExecutionGraph(executor_name) # *每次迭代皆須初始化 Execution Team
+
     # *設定資料夾路徑
-    task_folder_path = os.path.join("Docs", task)
+    task_folder_path = os.path.join("App Outputs", task)
     epoch_folder_path = os.path.join(task_folder_path, f"epoch_{epoch}")
 
     agent_parameter_yaml_path = os.path.join(epoch_folder_path, "agent_parameter.yaml")
@@ -101,15 +106,19 @@ def run_app(user_input, executor_name, task, epoch):
     # *建立與清理資料夾路徑
     if os.path.exists(epoch_folder_path):
         shutil.rmtree(epoch_folder_path)
-        print(f"Reset {epoch_folder_path}.\n")
+        print(f"Reset {epoch_folder_path}.")
     os.makedirs(epoch_folder_path, exist_ok=True)
     print(f"Set folder path to: {epoch_folder_path}")    
 
-    # *將基本的 agent_parameter.yaml 複製到 epoch 資料夾內
+    print(f"Environment and Execution Team for {task} in epoch {epoch} are initialized\n")
+
+    # *將上個版本的 agent_parameter.yaml 複製到 epoch 資料夾內
     # TODO 之後要改成複製上一個epoch的agent_parameter.yaml
-    shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
+    if epoch == 1:
+        shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
+    else:
+        shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
     set_agent_parameter_yaml_path(agent_parameter_yaml_path)
-    execution_graph = ExecutionGraph(executor_name) # *每次迭代皆須初始化 Execution Team
 
     # *若是 Execution Team 的 Web Executor，則設定截圖資料夾路徑
     if executor_name == "Web Executor":
@@ -117,9 +126,8 @@ def run_app(user_input, executor_name, task, epoch):
         execution_graph.set_screenshot_folder_path(screenshot_folder_path)
 
     # *啟動 Dynamic MAS
-    input("Press Enter to start running Dynamic MAS...")
-
-    print(f"Dynamic Mas for {task} in epoch {epoch} start running.\n")
+    input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}...")
+    print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
     start_time = time.time()
 
     loop = asyncio.new_event_loop()
@@ -139,16 +147,16 @@ def run_app(user_input, executor_name, task, epoch):
 evaluation_graph = EvaluationGraph() 
 evolution_graph = EvolutionGraph()
 
-# TODO 測試多次迭代
-# *設定迭代變數
+# *設定任務
 # Who is the headmaster of National Central University in Taiwan?
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
 user_input = "Please help me gather information related to scholarship applications." # *給 Execution Team 的使用者輸入
 executor_name = "Search Executor" # *"Search Executor" or "Web Executor"
-task = "test"
-epoch = "1"
+task = "Scholarship Application"
+max_epoch = 5
 
-input("Press Enter to start initializing environment...")
-run_app(user_input, executor_name, task, epoch) # *測試 Dynamic MAS
+# *測試 Dynamic MAS 多次迭代
+for epoch in range(max_epoch):
+    run_app(user_input, executor_name, task, epoch + 1)

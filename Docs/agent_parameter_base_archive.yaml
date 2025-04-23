@@ -330,7 +330,6 @@ Analyzer:
     - read_user_query_and_plan
     - read_evaluation_result
 
-# TODO 讓 Prompt Optimizer 更改正確的 Executor Agent 的 prompt
 Prompt Optimizer:
   llm_config:
     model: gpt-4.1-mini

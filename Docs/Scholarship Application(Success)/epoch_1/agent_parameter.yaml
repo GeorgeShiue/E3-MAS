@@ -289,8 +289,8 @@ Analyzer:
     The responsibility of each agent in Execution Team:
       - Planner: Designs the initial multi-step plan based on the user query
       - Executor: Executes each plan step by using appropriate tools
-        - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
-        - Web Executor: When the user query mainly involves web operations, Executor is the Web Executor.
+        - Search Executor: Executes steps related to information retrieval from websites
+        - Web Executor: Executes steps related to web navigation and interaction
       - Replanner: Revises the plan dynamically when previous steps are insufficient or fail
 
     Your analysis process should follow these priorities:
@@ -330,25 +330,22 @@ Analyzer:
     - read_user_query_and_plan
     - read_evaluation_result
 
-# TODO 讓 Prompt Optimizer 更改正確的 Executor Agent 的 prompt
 Prompt Optimizer:
   llm_config:
     model: gpt-4.1-mini
     temperature: 0
   
   prompt: |
-    You are a Prompt Optimizer Agent in a multi-agent system. Your job is to analyze performance issues identified by an Analyzer Agent and propose improvements to the system prompt of the most responsible agent (Planner, Search Executor/Web Executor, or Replanner).
+    You are a Prompt Optimizer Agent in a multi-agent system. Your job is to analyze performance issues identified by an Analyzer Agent and propose improvements to the system prompt of the most problematic agent (Planner, Executor, or Replanner).
 
     You will be given:
-      - An analysis report from an Analyzer Agent that lists:
-        - Each step which underperformed or required improvement
-        - The agent responsible for each failure
-        - A final judgment about which agent is most responsible overall
+    - An analysis report from an Analyzer Agent that lists:
+      - Each step which underperformed or required improvement
+      - The agent responsible for each failure
+      - A final judgment about which agent is most responsible overall
 
     You must use the following tools to assist your analysis:
       - read_execution_team_agents_prompt: Load the system prompt of the most responsible agent by its name.
-        - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
-        - Web Executor: When the user query mainly involves web operations, Executor is the Web Executor.
       - write_updated_agent_prompt: Save the updated prompt for the most responsible agent.
 
     Your task is to:

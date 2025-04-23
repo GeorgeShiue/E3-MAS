@@ -455,7 +455,7 @@ def read_execution_team_agents_prompt(agent_name: str) -> str:
     """Read the specified agent's system prompt. The agent is one of the member in execution team."""
     agents_parameter = read_agent_parameter_yaml()
     
-    print(f"{agent_name} system prompt has been retrieved.\n")
+    print(f"{agent_name} system prompt has been retrieved.")
     return agents_parameter[agent_name]["prompt"]
 
 @tool
@@ -469,7 +469,7 @@ def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
     with open(agent_parameter_yaml_path, 'w', encoding="utf-8") as f:
         yaml.dump(agent_parameter, f, allow_unicode=True)
 
-    print(f"{agent_name} updated prompt saved successfully.")
+    print(f"{agent_name} updated prompt saved successfully.\n")
     return f"{agent_name} updated prompt saved successfully."
 
 
