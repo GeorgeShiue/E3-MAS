@@ -11,12 +11,12 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-from tool import SearchExecutionTool, WebExecutionTool, EvaluationTool, EvolutionTool, read_agents_parameter_yaml
+from tool import SearchExecutionTool, WebExecutionTool, EvaluationTool, EvolutionTool, read_agent_parameter_yaml
 
 class AgentFactory():
     @staticmethod
     def extract_agent_parameter_yaml(agent_name):
-        agents_parameter = read_agents_parameter_yaml()
+        agents_parameter = read_agent_parameter_yaml()
 
         llm_config = agents_parameter[agent_name]["llm_config"]
         prompt = agents_parameter[agent_name]["prompt"]
@@ -30,10 +30,10 @@ class AgentFactory():
 
         print(f"{agent_name}_llm_config:")
         for key, value in llm_config.items():
-            print(f"{key}: {value}")
+            print(f"    {key}: {value}")
         print()
 
-        print(f"{agent_name}_prompt: \n{prompt}")
+        print(f"{agent_name}_prompt:\n  {prompt}")
         print()
 
     @staticmethod
@@ -62,7 +62,7 @@ class AgentFactory():
         else:
             print(f"{agent_name}_tool_list: ")
             for tool in selected_tool_list:
-                print(tool.name)
+                print(f"    {tool.name}")
         print()
 
         return agent

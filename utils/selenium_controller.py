@@ -1,3 +1,4 @@
+import os
 import docker
 import random
 import time
@@ -15,6 +16,7 @@ class SeleniumController:
         self.port_list = []
         self.used_ports = set()
         self.browser_list = []
+        self.screenshot_folder_path = ""
 
     # ! selenium contoller 的解構子無法使用，Import Error
     # def __del__(self):
@@ -167,7 +169,7 @@ class SeleniumController:
         if browser is None:
             raise Exception(f"No browser found for user_id {user_id}")
         
-        file_path = "Outputs/screenshots/" + file_name + ".png"
+        file_path = os.path.join(self.screenshot_folder_path, f"{file_name}.png")
         browser.save_screenshot(file_path)
         print(f"Screenshot saved for user_id {user_id} at {file_path}")
         return f"Screenshot saved for user_id {user_id} at {file_path}"

@@ -5,17 +5,23 @@ import time
 from dotenv import load_dotenv
 from typing_extensions import Union, List
 
-from graph import ExecutionGraph, EvaluationGraph
+from langgraph.errors import GraphRecursionError
+
+from tool import set_agent_parameter_yaml_path
+from graph import ExecutionGraph, EvaluationGraph, EvolutionGraph
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
 os.environ["OPENAI_API_KEY"] = api_key
 
 def clear_chat_log(chat_log_path):
-    with open(chat_log_path, "w", encoding='utf-8') as f:
-        f.write("")
+    if os.path.exists(chat_log_path):
+        with open(chat_log_path, "w", encoding='utf-8') as f:
+            f.write("")
+    else:
+        print(f"{chat_log_path} does not exist. Skip clearing chat log.")
 
-def write_to_chat_log(chat_log_path, content):
+def write_chat_log(chat_log_path, content):
     with open(chat_log_path, "a", encoding='utf-8') as f:
         f.write(content)
 
@@ -40,6 +46,9 @@ def compute_progress_rate(x: List[float]) -> float:
         progress_i = sum(x_list[i]) / K
         max_progress = max(max_progress, progress_i)
 
+    print("Scores: ", x)
+    print("Progress Rate: ", max_progress)
+    
     return max_progress
 
 async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_input, chat_log_path):
@@ -49,57 +58,97 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
         "history": [],
     }
 
-    clear_chat_log(chat_log_path)
-    write_to_chat_log(chat_log_path, f"User Query:\n{inputs['input']}\n\n")
+    # clear_chat_log(chat_log_path)
+    write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
 
     # *若是 Execution Team 的 Web Executor，則等待瀏覽器初始化
     if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
         graph_class.agent.wait_browser_init()
 
-    async for event in graph_class.graph.astream(inputs, config=config):
-        for agent, state in event.items():
-            if agent != "__end__":
-                write_to_chat_log(chat_log_path, f"{agent}:\n")
-                
-                for key, value in state.items():
-                    if key == "scores":
-                        progress_rate = compute_progress_rate(value)
-                        write_to_chat_log(chat_log_path, f"Progress Rate: {progress_rate:.2f}\n")
-                    elif key != "history":
-                        write_to_chat_log(chat_log_path, f"{key}: {value}\n")
+    try:
+        async for event in graph_class.graph.astream(inputs, config=config):
+            for agent, state in event.items():
+                if agent == "Solver": # 輸出最終回覆給使用者檢視
+                    print("Execution Team Result: " + state["response"] + "\n")
+                elif agent != "__end__": # 記錄聊天紀錄
+                    write_chat_log(chat_log_path, f"{agent}:\n")
+                    
+                    for key, value in state.items():
+                        if key == "scores":
+                            progress_rate = compute_progress_rate(value)
+                            # write_chat_log(chat_log_path, f"\nProgress Rate: {progress_rate:.2f}\n")
+                        elif key != "history":
+                            write_chat_log(chat_log_path, f"    {key}: {value}\n")
 
-                    write_to_chat_log(chat_log_path, "\n")
-                
-                write_to_chat_log(chat_log_path, "\n")
+                    write_chat_log(chat_log_path, "\n")
+    except GraphRecursionError as e:
+        print(f"GraphRecursionError: {e}")
+        write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
 
-SCREENSHOT_FOLDER_PATH = os.path.join("Outputs", "screenshots")
-EXECUTION_CHAT_LOG_PATH = os.path.join("Outputs", "execution_chat_log.txt")
-EVALUATION_CHAT_LOG_PATH = os.path.join("Outputs", "evaluation_chat_log.txt")
+def run_app(user_input, executor_name, task, epoch):
+    # *設定資料夾路徑
+    task_folder_path = os.path.join("Docs", task)
+    epoch_folder_path = os.path.join(task_folder_path, f"epoch_{epoch}")
 
-executor_name = "Web Executor" # *"Search Executor" or "Web Executor"
-# execution_graph = ExecutionGraph(executor_name) # 先定義便可先創建browser
-evaluation_graph = EvaluationGraph()
+    agent_parameter_yaml_path = os.path.join(epoch_folder_path, "agent_parameter.yaml")
+    execution_chat_log_path = os.path.join(epoch_folder_path, "execution_chat_log.txt")
+    evaluation_chat_log_path = os.path.join(epoch_folder_path, "evaluation_chat_log.txt")
+    evolution_chat_log_path = os.path.join(epoch_folder_path, "evolution_chat_log.txt")
 
-# if os.path.exists(SCREENSHOT_FOLDER_PATH):
-#     shutil.rmtree(SCREENSHOT_FOLDER_PATH)
-# os.makedirs(SCREENSHOT_FOLDER_PATH, exist_ok=True)
+    evaluation_graph.set_execution_chat_log_path(execution_chat_log_path)
+    evolution_graph.set_execution_and_evaluation_chat_log_path(execution_chat_log_path, evaluation_chat_log_path)
 
+    # *建立與清理資料夾路徑
+    if os.path.exists(epoch_folder_path):
+        shutil.rmtree(epoch_folder_path)
+        print(f"Reset {epoch_folder_path}.\n")
+    os.makedirs(epoch_folder_path, exist_ok=True)
+    print(f"Set folder path to: {epoch_folder_path}")    
+
+    # *將基本的 agent_parameter.yaml 複製到 epoch 資料夾內
+    # TODO 之後要改成複製上一個epoch的agent_parameter.yaml
+    shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
+    set_agent_parameter_yaml_path(agent_parameter_yaml_path)
+    execution_graph = ExecutionGraph(executor_name) # *每次迭代皆須初始化 Execution Team
+
+    # *若是 Execution Team 的 Web Executor，則設定截圖資料夾路徑
+    if executor_name == "Web Executor":
+        screenshot_folder_path = os.path.join(epoch_folder_path, "screenshot")
+        execution_graph.set_screenshot_folder_path(screenshot_folder_path)
+
+    # *啟動 Dynamic MAS
+    input("Press Enter to start running Dynamic MAS...")
+
+    print(f"Dynamic Mas for {task} in epoch {epoch} start running.\n")
+    start_time = time.time()
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path)) # *Test Execution Team
+    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path)) # *Test Evaluation Team
+    loop.run_until_complete(run_graph_with_graph_class(evolution_graph, "Please analyze the evaluation result of the execution team.", evolution_chat_log_path)) # *Test Evolution Team
+    loop.close()
+
+    end_time = time.time()
+    print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
+
+    # * 測試 Execution Team 的 Web Executor 時，必須在這裡清除selenium controller的container
+    # if execution_graph.agent.executor_name == "Web Executor":
+    #     execution_graph.agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+
+# * 初始化 Evaluation Team、Evolution Team
+evaluation_graph = EvaluationGraph() 
+evolution_graph = EvolutionGraph()
+
+# TODO 測試多次迭代
+# *設定迭代變數
 # Who is the headmaster of National Central University in Taiwan?
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-user_input = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button."
+user_input = "Please help me gather information related to scholarship applications." # *給 Execution Team 的使用者輸入
+executor_name = "Search Executor" # *"Search Executor" or "Web Executor"
+task = "test"
+epoch = "1"
 
-module_name = "Evaluation Team" # *Execution Team or Evaluation Team or Evolution Team
-print(f"{module_name} start running...\n")
-
-start_time = time.time()
-loop = asyncio.new_event_loop()
-# loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, EXECUTION_CHAT_LOG_PATH)) # *Test Execution Team
-loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", EVALUATION_CHAT_LOG_PATH)) # *Test Evaluation Team
-end_time = time.time()
-
-print(f"\n{module_name} Run Time: {end_time - start_time} seconds\n")
-
-# if execution_graph.agent.executor_name == "Web Executor":
-#     execution_graph.agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+input("Press Enter to start initializing environment...")
+run_app(user_input, executor_name, task, epoch) # *測試 Dynamic MAS

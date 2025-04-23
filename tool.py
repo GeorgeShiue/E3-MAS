@@ -18,10 +18,19 @@ from utils.selenium_controller import SeleniumController
 
 
 
-EVALUATION_CHAT_LOG_FILEPATH = "Docs/evaluation_chat_log_archive.txt"
-EXECUTION_CHAT_LOG_FILEPATH = "Docs/execution_chat_log_archive.txt"
+# EXECUTION_CHAT_LOG_FILEPATH = "Docs/execution_chat_log_archive.txt"
+# EVALUATION_CHAT_LOG_FILEPATH = "Docs/evaluation_chat_log_archive.txt"
 
+# *Testing
+EXECUTION_CHAT_LOG_FILEPATH = "Outputs/execution_chat_log.txt"
+EVALUATION_CHAT_LOG_FILEPATH = "Outputs/evaluation_chat_log.txt"
 
+agent_parameter_yaml_path = "agent_parameter_base.yaml"
+
+def set_agent_parameter_yaml_path(path):
+    """Set the path of agent_parameter.yaml file."""
+    global agent_parameter_yaml_path
+    agent_parameter_yaml_path = path
 
 class WebExecutionTool():
     def __init__(self, user_id = "1130"):
@@ -200,6 +209,37 @@ class SearchExecutionTool():
 
 class EvaluationTool():
     def __init__(self):
+        self.execution_chat_log_path = ""
+
+        @tool
+        def read_user_query_and_plan() -> str:
+            """Read user query and plan made by Planner."""
+            content = []
+            with open(self.execution_chat_log_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if "Executor:" in line:  # 偵測到 "Executor" 關鍵字時停止
+                        break
+                    content.append(line)
+
+            print("User query and plan have been retrieved.")
+            return ''.join(content)
+
+        @tool
+        def read_execution_chat_log() -> str:
+            """Read the chat log of execution team."""
+            with open(self.execution_chat_log_path, "r", encoding="utf-8") as f:
+                content = []
+                start = False
+                for line in f:
+                    if "Executor:" in line:
+                        start = True
+
+                    if start:
+                        content.append(line)
+            
+            print("Execution chat log has been retrieved.")
+            return ''.join(content)
+
         # define tool list
         self.tool_list = [
             read_user_query_and_plan,
@@ -211,8 +251,43 @@ class EvaluationTool():
 
 class EvolutionTool():
     def __init__(self):
+        self.execution_chat_log_path = ""
+        self.evaluation_chat_log_path = ""
+
+        @tool
+        def read_user_query_and_plan() -> str:
+            """Read user query and plan made by Planner."""
+            content = []
+            with open(self.execution_chat_log_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if "Executor:" in line:
+                        break
+                    content.append(line)
+                    
+            print("User query and plan have been retrieved.")
+            return ''.join(content)
+            
+        @tool
+        def read_evaluation_result() -> str:
+            """Read the evaluation result of execution team."""
+            evaluator_content = []
+            is_evaluator_section = False
+
+            with open(self.evaluation_chat_log_path, 'r', encoding='utf-8') as file:
+                for line in file:
+                    # 檢查是否進入 evaluator: 區段
+                    if line.strip().startswith("evaluator:"):
+                        is_evaluator_section = True
+                        evaluator_content.append(line.split("evaluator:", 1)[-1].strip()) # 擷取 evaluator: 後的內容
+                    elif is_evaluator_section:
+                        evaluator_content.append(line.strip()) # 如果是 evaluator: 區段，繼續擷取內容
+
+            print("Evaluation result has been retrieved.\n")
+            return "\n".join(evaluator_content)
+
         # define tool list
         self.tool_list = [
+            read_user_query_and_plan,
             read_evaluation_result,
             read_execution_team_agents_prompt,
             write_updated_agent_prompt,
@@ -221,9 +296,12 @@ class EvolutionTool():
         # define tool dict from tool list
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
 
-def read_agents_parameter_yaml():
+def read_agent_parameter_yaml():
     """Read the agent_parameter.yaml file and return the content."""
-    with open('agent_parameter.yaml', 'r', encoding="utf-8") as f:
+    # with open('agent_parameter.yaml', 'r', encoding="utf-8") as f:
+    #     agents_parameter = yaml.safe_load(f)
+
+    with open(agent_parameter_yaml_path, 'r', encoding="utf-8") as f:
         agents_parameter = yaml.safe_load(f)
     
     return agents_parameter
@@ -314,6 +392,9 @@ def website_links_crawler(link: str) -> str:
         soup = BeautifulSoup(page_content, 'html.parser')
         links = soup.find_all('a', href=True) # 找出所有超連結 # TODO 讀取iframe有問題
 
+        print(page_content)
+        print(len(links))
+
         websites = asyncio.run(crawl_links_async(links, url))
         # websites = await crawl_links_async(links, url)
         print(f"成功獲取 [{url}] 中共{len(websites)}個連結。")
@@ -370,84 +451,35 @@ def pdf_reader(url: str) -> str:
         return f"下載失敗，HTTP 狀態碼: {response.status_code}"
 
 @tool
-def read_user_query_and_plan() -> str:
-    """Read user query and plan made by Planner."""
-    content = []
-    with open(EXECUTION_CHAT_LOG_FILEPATH, 'r', encoding='utf-8') as f:
-        for line in f:
-            if "executor:" in line:  # 偵測到 "executor" 關鍵字時停止
-                break
-            content.append(line)
-
-    print("User query and plan have been retrieved.")
-    return ''.join(content)
-
-@tool
-def read_execution_chat_log() -> str:
-    """Read the chat log of execution team."""
-    with open(EXECUTION_CHAT_LOG_FILEPATH, "r", encoding="utf-8") as f:
-        content = []
-        start = False
-        for line in f:
-            if "executor:" in line:
-                start = True
-            if "solver:" in line:
-                start = False
-
-            if start:
-                content.append(line)
-    
-    print("Execution chat log has been retrieved.")
-    return ''.join(content)
-
-@tool
-def read_evaluation_result() -> str:
-    """Read the evaluation result of execution team."""
-    evaluator_content = []
-    is_evaluator_section = False
-
-    with open(EVALUATION_CHAT_LOG_FILEPATH, 'r', encoding='utf-8') as file:
-        for line in file:
-            # 檢查是否進入 evaluator: 區段
-            if line.strip().startswith("evaluator:"):
-                is_evaluator_section = True
-                evaluator_content.append(line.split("evaluator:", 1)[-1].strip()) # 擷取 evaluator: 後的內容
-            elif is_evaluator_section:
-                evaluator_content.append(line.strip()) # 如果是 evaluator: 區段，繼續擷取內容
-
-    print("Evaluation result has been retrieved.")
-    return "\n".join(evaluator_content)
-
-@tool
-def read_execution_team_agents_prompt(agent_name) -> str:
+def read_execution_team_agents_prompt(agent_name: str) -> str:
     """Read the specified agent's system prompt. The agent is one of the member in execution team."""
-    agents_parameter = read_agents_parameter_yaml()
+    agents_parameter = read_agent_parameter_yaml()
     
-    print(f"{agent_name} system prompt has been retrieved.")
+    print(f"{agent_name} system prompt has been retrieved.\n")
     return agents_parameter[agent_name]["prompt"]
 
 @tool
 def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
     """Write the updated system prompt of specified agent to the YAML file."""
-    
-    with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
-        f.write(f"{agent_name}:\n{updated_prompt}")
+    # with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
+    #     f.write(f"{agent_name}:\n{updated_prompt}")
 
-    # agents_parameter = read_agents_parameter_yaml()
-    # agents_parameter[agent_name]["prompt"] = updated_prompt
+    agent_parameter = read_agent_parameter_yaml()
+    agent_parameter[agent_name]["prompt"] = updated_prompt
+    with open(agent_parameter_yaml_path, 'w', encoding="utf-8") as f:
+        yaml.dump(agent_parameter, f, allow_unicode=True)
 
-    # with open('Outputs/agents_parameter.yaml', 'w', encoding="utf-8") as yaml_file:
-    #     yaml.dump(agents_parameter, yaml_file)
-
+    print(f"{agent_name} updated prompt saved successfully.")
     return f"{agent_name} updated prompt saved successfully."
 
 
 
 if __name__ == "__main__":
-    web_operation_tool = WebExecutionTool()
-    
-    web_operation_tool.tool_dict["create_browser"].invoke(input=None)
-    web_operation_tool.tool_dict["navigate"].invoke({"url": "https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest"})
-    web_operation_tool.tool_dict["input_text_with_label"].invoke({"label_text": "Account", "text": "111502026", "privacy": "Account"})
+    # result = read_user_query_and_plan.invoke(input=None)
+    # print(result)
+    # print()
+    # result = read_execution_chat_log.invoke(input=None)
+    # print(result)
 
-    del web_operation_tool.selenium_controller
+    website_links_crawler.invoke("http://www.ncu.edu.tw")
+    website_links_crawler.invoke("https://pdc.adm.ncu.edu.tw")

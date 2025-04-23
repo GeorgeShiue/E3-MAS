@@ -33,7 +33,7 @@ class ExecutionAgent():
     def __init__(self, executor_name):
         self.executor_name = executor_name
 
-        self.execution_tool = self.init_execution_tool()
+        self.tool = self.init_execution_tool()
 
         self.planner = self.create_planner_agent()
         self.executor = self.create_executor_agent()
@@ -76,7 +76,7 @@ class ExecutionAgent():
         return planner
 
     def create_executor_agent(self):
-        executor = AgentFactory.create_react_agent_with_yaml(self.executor_name, self.execution_tool.tool_dict)
+        executor = AgentFactory.create_react_agent_with_yaml(self.executor_name, self.tool.tool_dict)
         return executor
 
     def create_replanner_agent(self):
@@ -118,24 +118,33 @@ class EvaluationAgent():
         )
 
     def __init__(self):
-        self.evaluation_tool = EvaluationTool()
+        self.tool = EvaluationTool()
         self.critic = self.create_critic_agent()
         self.evaluator = self.create_evaluator_agent()
 
     def create_critic_agent(self):
-        critic = AgentFactory.create_react_agent_with_yaml("Critic", self.evaluation_tool.tool_dict)
+        critic = AgentFactory.create_react_agent_with_yaml("Critic", self.tool.tool_dict)
         return critic
     
     def create_evaluator_agent(self):
-        evaluator = AgentFactory.create_react_agent_with_yaml("Evaluator", self.evaluation_tool.tool_dict, self.EvaluatorResponse)
+        evaluator = AgentFactory.create_react_agent_with_yaml("Evaluator", self.tool.tool_dict, self.EvaluatorResponse)
         return evaluator
 
 class EvolutionAgent():
     def __init__(self):
-        self.analyzer = AgentFactory.create_react_agent_with_yaml("Analyzer")
-        self.prompt_optimizer = AgentFactory.create_react_agent_with_yaml("Prompt Optimizer")
+        self.tool = EvolutionTool()
+        self.analyzer = self.create_analyzer_agent()
+        self.prompt_optimizer = self.create_prompt_optimizer_agent()
 
+    def create_analyzer_agent(self):
+        analyzer = AgentFactory.create_react_agent_with_yaml("Analyzer", self.tool.tool_dict)
+        return analyzer
 
+    def create_prompt_optimizer_agent(self):
+        prompt_optimizer = AgentFactory.create_react_agent_with_yaml("Prompt Optimizer", self.tool.tool_dict)
+        return prompt_optimizer
+    
+    
 
 if __name__ == "__main__":
     import time
@@ -178,10 +187,39 @@ if __name__ == "__main__":
     #     print("Response: " + response["messages"][-1].content)
 
     # *Test Evaluation Agent
+    # evaluation_agent = EvaluationAgent()
+    # evaluation_agent.tool.execution_chat_log_path = "Outputs/execution_chat_log.txt" 
+    # critic = evaluation_agent.critic
+    # evaluator = evaluation_agent.evaluator
 
-    evaluation_agent = EvaluationAgent()
-    critic = evaluation_agent.critic
-    evaluator = evaluation_agent.evaluator
+    # response = critic.invoke({"messages": [("user", "Please evaluate the performance of execution team.")]})
+    # print(response["messages"][-1].content) 
+
+    # *Test Evolution Agent
+    evolution_agent = EvolutionAgent()
+    evolution_agent.tool.execution_chat_log_path = "Outputs/test/epoch 1/execution_chat_log.txt"
+    evolution_agent.tool.evaluation_chat_log_path = "Outputs/test/epoch 1/evaluation_chat_log.txt"
+    analyzer = evolution_agent.analyzer
+    prompt_optimizer = evolution_agent.prompt_optimizer
+
+    # response = analyzer.invoke({"messages": [("user", "Please analyze the evaluation result of the execution team.")]}) # *測試Analyzer Agent
+    # print(response["messages"][-1].content)
+    
+    analysis = """
+- **Step Summary**: Evaluate sufficiency judgment requests and clarifications (multiple attempts)
+- **Issue or Weakness**: The Execution Team repeatedly requested the content to be evaluated for sufficiency before providing a judgment, causing delays and indicating inefficiency and lack of proactive content handling.
+- **Responsible Agent**: Executor (Search Executor)
+- **Justification**: This step involves evaluating the content obtained and making a sufficiency judgment, which is part of executing the plan steps. The repeated requests for content indicate that the Executor did not effectively manage or utilize the retrieved information, leading to delays. Since this is about handling and processing retrieved content, it falls under the Search Executor's responsibility.
+- **Suggested Improvement**: The Search Executor should improve content management by better tracking and utilizing already obtained information to avoid redundant requests. They should proactively assess content sufficiency without unnecessary back-and-forth, thus improving efficiency.
+
+No other steps were scored as Partially Met or Not Met, and the fully met steps showed no significant improvement suggestions that indicate clear underperformance.
+
+**Primary Responsible Agent**: Search Executor
+**Justification for Final Attribution**: The only partial failure was due to inefficient handling of content during execution, specifically repeated requests for sufficiency evaluation that delayed the process. This is clearly an execution issue rather than planning or replanning.
+**Summary of Issues**: The main issue was inefficiency in content handling and evaluation during execution, causing delays. Other steps were fully met with no major problems.
+    """
+    response = prompt_optimizer.invoke({"messages": [("user", analysis)]}) # *測試Prompt Optimizer Agent
+    print(response["messages"][-1].content) 
 
     end_time = time.time()
 
@@ -189,4 +227,4 @@ if __name__ == "__main__":
 
     # TODO 清除過程使用Threading
     # if execution_agent.executor_name == "Web Executor":
-    #     execution_agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+    #     execution_agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除

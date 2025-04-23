@@ -38,7 +38,7 @@ class ExecutionGraph():
         task_formatted = f"""For the following plan:
     {plan_str}\n\nYou are tasked with executing step {1}, {task}."""
         agent_response = await self.agent.executor.ainvoke({"messages": [("user", task_formatted)]}) # react agent 用 messages 方式接收訊息
-        state["history"].append(("Executor", (task, agent_response["messages"][-1].content)))
+        state["history"].append((self.executor_name, (task, agent_response["messages"][-1].content)))
 
         return {
             "past_steps": [(task, agent_response["messages"][-1].content)], # react agent 接收訊息方式
@@ -71,36 +71,39 @@ class ExecutionGraph():
     # Define Conditional Edge Function
     def should_end(self, state: PlanExecute):
         if "response" in state and state["response"]:
-            return "solver"
+            return "Solver"
         else:
-            return "executor"
+            return self.executor_name
         
     def create_execution_graph(self):
         clean_graph = StateGraph(self.PlanExecute)
 
         # TODO node定義可以再更抽象化
-        clean_graph.add_node("planner", self.plan_step)
-        clean_graph.add_node("executor", self.execute_step)
-        clean_graph.add_node("replanner", self.replan_step)
-        clean_graph.add_node("solver", self.solve_step)
+        clean_graph.add_node("Planner", self.plan_step)
+        clean_graph.add_node(self.executor_name, self.execute_step)
+        clean_graph.add_node("Replanner", self.replan_step)
+        clean_graph.add_node("Solver", self.solve_step)
 
-        clean_graph.add_edge(START, "planner")
-        clean_graph.add_edge("planner", "executor")
-        clean_graph.add_edge("executor", "replanner")
+        clean_graph.add_edge(START, "Planner")
+        clean_graph.add_edge("Planner", self.executor_name)
+        clean_graph.add_edge(self.executor_name, "Replanner")
         clean_graph.add_conditional_edges(
-            "replanner",
+            "Replanner",
             # Next, we pass in the function that will determine which node is called next.
             self.should_end,
-            ["executor", "solver"],
+            [self.executor_name, "Solver"],
         )
-        clean_graph.add_edge("solver", END)
+        clean_graph.add_edge("Solver", END)
 
         graph = clean_graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
-        GraphFactory.save_graph_mermaid(graph, "Execution Graph") # 測試GraphFactory的save_graph_mermaid功能
+        # GraphFactory.save_graph_mermaid(graph, "Execution Graph") # 測試GraphFactory的save_graph_mermaid功能
         print("Execution Graph is created.\n")
 
         return graph
     
+    def set_screenshot_folder_path(self, screenshot_folder_path):
+        self.agent.tool.selenium_controller.screenshot_folder_path = screenshot_folder_path
+
 class EvaluationGraph():
     class Evaluation(TypedDict):
         input: str
@@ -143,8 +146,52 @@ class EvaluationGraph():
         print("Evaluation Graph is created.\n")
         
         return graph
+    
+    def set_execution_chat_log_path(self, execution_chat_log_path):
+        self.agent.tool.execution_chat_log_path = execution_chat_log_path    
 
-        
+class EvolutionGraph():
+    class Evolution(TypedDict):
+        input: str
+        analysis: str
+        result: str
+
+    def __init__(self):
+        self.agent = EvolutionAgent()
+        self.graph = self.create_evolution_graph()
+
+    async def analyze_step(self, state: Evolution):
+        response = await self.agent.analyzer.ainvoke({"messages": [("user", state["input"])]})
+        return {
+            "analysis": response["messages"][-1].content # 儲存分析結果到state內
+        }
+
+    async def prompt_optimize_step(self, state: Evolution):
+        response = await self.agent.prompt_optimizer.ainvoke({"messages": [("user", state["analysis"])]})
+        return {
+            "result": response["messages"][-1].content, # 儲存最終回覆到state內,
+        }
+
+    def create_evolution_graph(self):
+        clean_graph = StateGraph(self.Evolution)
+
+        clean_graph.add_node("analyzer", self.analyze_step)
+        clean_graph.add_node("prompt_optimizer", self.prompt_optimize_step)
+
+        clean_graph.add_edge(START, "analyzer")
+        clean_graph.add_edge("analyzer", "prompt_optimizer")
+        clean_graph.add_edge("prompt_optimizer", END)
+
+        graph = clean_graph.compile()
+        # GraphFactory.save_graph_mermaid(graph, "Evolution Graph") # 測試GraphFactory的save_graph_mermaid功能
+        print("Evolution Graph is created.\n")
+
+        return graph
+    
+    def set_execution_and_evaluation_chat_log_path(self, execution_chat_log_path, evaluation_chat_log_path):
+        self.agent.tool.execution_chat_log_path = execution_chat_log_path
+        self.agent.tool.evaluation_chat_log_path = evaluation_chat_log_path
+
 if __name__ == "__main__":
     import asyncio
     import os
@@ -156,67 +203,5 @@ if __name__ == "__main__":
     api_key = os.getenv("API_KEY")
     os.environ["OPENAI_API_KEY"] = api_key
 
-    executor_name = "Web Executor" # "Search Executor" or "Web Executor"
-    # execution_graph = ExecutionGraph(executor_name) # Init Execution Team
-    evaluation_graph = EvaluationGraph() # Init Evaluation Team
-
-    screenshot_folder_path = os.path.join("Outputs", "screenshots")
-    execution_chat_log_path = os.path.join("Outputs", "execution_chat_log.txt")
-    evaluation_chat_log_path = os.path.join("Outputs", "evaluation_chat_log.txt")
-
-    # if os.path.exists(screenshot_folder_path):
-    #     shutil.rmtree(screenshot_folder_path)
-    # os.makedirs(screenshot_folder_path, exist_ok=True)
-
-    def clear_chat_log(chat_log_path):
-        with open(chat_log_path, "w", encoding='utf-8') as f:
-            f.write("")
-
-    def write_to_chat_log(chat_log_path, content):
-        with open(chat_log_path, "a", encoding='utf-8') as f:
-            f.write(content)
-
-    async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_input, chat_log_path):
-        config = {"recursion_limit": 30}
-        inputs = {
-            "input": user_input,
-            "history": [],
-        }
-
-        clear_chat_log(chat_log_path)
-        write_to_chat_log(chat_log_path, f"User Query:\n{inputs['input']}\n\n")
-
-        # *若是 Execution Team 的 Web Executor，則等待瀏覽器初始化
-        if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
-            graph_class.agent.wait_browser_init()
-
-        async for event in graph_class.graph.astream(inputs, config=config):
-            for agent, state in event.items():
-                if agent != "__end__":
-                    write_to_chat_log(chat_log_path, f"{agent}:\n")
-
-                    for key, value in state.items():
-                        if (key != "history"):
-                            write_to_chat_log(chat_log_path, f"{key}: {value}\n")
-                    
-                    write_to_chat_log(chat_log_path, "\n")
-
-    # Who is the headmaster of National Central University in Taiwan?
-    # Summarize the content of the 111 Academic Affairs Regulations.
-    # Please help me gather information related to scholarship applications.
-    # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-    user_input = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button."
-
-    module_name = "Execution Team" # Execution Team or Evaluation Team or Evolution Team
-    print(f"{module_name} start running...\n")
-
-    start_time = time.time()
-    loop = asyncio.new_event_loop()
-    # loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path)) # *Test Execution Team
-    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path)) # *Test Evaluation Team
-    end_time = time.time()
-
-    print(f"\n{module_name} Run Time: {end_time - start_time} seconds\n")
-
-    # if execution_graph.agent.executor_name == "Web Executor":
-    #     execution_graph.agent.execution_tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
+    execution_graph = ExecutionGraph("Search Executor")
+    # evolution_graph = EvolutionGraph()
