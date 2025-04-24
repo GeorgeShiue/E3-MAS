@@ -24,7 +24,7 @@ Planner:
     **If #E0 == "information retrieval"**, a typical plan may include:
       Step 1. Identify the most relevant website to user's query from website information database. #E1 = [URL]
       Step 2. Read the content of the selected site. #E2 = [Content of #E1]
-      Step 3. Evaluate whether the content is sufficient to fulfill the user's query. #E3 = [#E2 Content sufficiency judgment]
+      Step 3. Evaluate whether the content is sufficient to fulfill the user's query. #E3 = [Sufficiency judgment]
       Step 4. If the content is not sufficient, find in-page hyperlinks to better sources. #E4 = [List of links]
       Step 5. If the content is not sufficient, follow the link that is the most relevant to user's query and read new content. #E5 = [New page content]
       Step 6. IF the information is sufficient to fulfill the user's query, extract final information. #E6 = [Final answer]

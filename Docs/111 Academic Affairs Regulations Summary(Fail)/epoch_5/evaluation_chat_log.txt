@@ -1,0 +1,123 @@
+User Query:
+   Please evaluate the performance of execution team.
+
+critic:
+    rubric: Evaluation Rubric for Plan Steps Addressing User Task: "Summarize the content of the 111 Academic Affairs Regulations"
+
+Step 1: Identify the most relevant website or document repository that contains the 111 Academic Affairs Regulations at National Central University.
+- Step Objective: Locate the primary source or repository where the 111 Academic Affairs Regulations can be found.
+- Linked Requirements: E1 - Identification of source URL or document location.
+- Expected Input/Output: Input - User query; Output - Valid URL or document location pointing to the regulations.
+- Failure Indicators: Output is unrelated, incorrect, or vague source; source does not pertain to National Central University or the specified regulations.
+- Fallback Evaluation Rules: If a similar step identifies a different but still authoritative and relevant source, evaluate based on source credibility and relevance.
+- Evaluation Criteria:
+  - Information Quality: Source must be accurate and authoritative.
+  - Alignment with Requirements: Source must specifically contain the 111 Academic Affairs Regulations.
+  - Step Efficiency: Source should be the most direct and comprehensive repository.
+  - Clarity of Expression: Source location should be clearly stated and unambiguous.
+
+Step 2: Access and read the full content of the 111 Academic Affairs Regulations from the identified source.
+- Step Objective: Retrieve the complete text of the regulations from the identified source.
+- Linked Requirements: E2 - Content retrieval of the regulations.
+- Expected Input/Output: Input - Source URL or location; Output - Full text content of the 111 Academic Affairs Regulations.
+- Failure Indicators: Partial, incomplete, or incorrect content; failure to access the source.
+- Fallback Evaluation Rules: If content is retrieved from an alternative source, verify completeness and relevance.
+- Evaluation Criteria:
+  - Information Quality: Content must be complete and accurate.
+  - Alignment with Requirements: Content must correspond exactly to the 111 Academic Affairs Regulations.
+  - Step Efficiency: Retrieval should be direct without unnecessary detours.
+  - Clarity of Expression: Content should be clearly presented and readable.
+
+Step 3: Evaluate whether the retrieved content is complete and sufficient to provide an accurate summary of the 111 Academic Affairs Regulations. Provide an explicit sufficiency judgment with rationale.
+- Step Objective: Assess the adequacy of the retrieved content for summarization.
+- Linked Requirements: E3 - Sufficiency judgment and rationale.
+- Expected Input/Output: Input - Retrieved content; Output - Explicit judgment on sufficiency with supporting rationale.
+- Failure Indicators: No clear judgment or rationale; judgment contradicts content completeness.
+- Fallback Evaluation Rules: For similar evaluation steps, ensure explicitness and logical consistency of sufficiency judgment.
+- Evaluation Criteria:
+  - Information Quality: Judgment must be well-supported and accurate.
+  - Alignment with Requirements: Judgment must directly address content sufficiency.
+  - Step Efficiency: Judgment should be concise and focused.
+  - Clarity of Expression: Rationale should be clearly articulated.
+
+Step 4: If the content is insufficient, locate additional or updated sources or related documents that can supplement the information.
+- Step Objective: Identify supplementary sources to fill content gaps.
+- Linked Requirements: E4 - List of additional sources or links.
+- Expected Input/Output: Input - Sufficiency judgment indicating insufficiency; Output - List of relevant supplementary sources.
+- Failure Indicators: Irrelevant or redundant sources; failure to identify any supplementary sources when needed.
+- Fallback Evaluation Rules: Alternative steps proposing different supplementary sources should be evaluated for relevance and authority.
+- Evaluation Criteria:
+  - Information Quality: Sources must be credible and relevant.
+  - Alignment with Requirements: Sources must supplement missing or outdated information.
+  - Step Efficiency: Source list should be concise and targeted.
+  - Clarity of Expression: Sources should be clearly listed and described.
+
+Step 5: Access and read the supplementary content from the additional sources.
+- Step Objective: Retrieve supplementary content to complete the information set.
+- Linked Requirements: E5 - Supplementary content retrieval.
+- Expected Input/Output: Input - List of supplementary sources; Output - Supplementary content text.
+- Failure Indicators: Failure to retrieve content; retrieved content irrelevant or insufficient.
+- Fallback Evaluation Rules: Similar retrieval steps should be judged on completeness and relevance of supplementary content.
+- Evaluation Criteria:
+  - Information Quality: Supplementary content must be accurate and relevant.
+  - Alignment with Requirements: Content must address gaps identified previously.
+  - Step Efficiency: Retrieval should be direct and comprehensive.
+  - Clarity of Expression: Content should be clearly presented.
+
+Step 6: Extract and compose a concise summary of the 111 Academic Affairs Regulations based on the gathered and verified content.
+- Step Objective: Produce a clear, concise, and accurate summary of the regulations.
+- Linked Requirements: E6 - Summary composition.
+- Expected Input/Output: Input - Verified full and supplementary content; Output - Concise summary text.
+- Failure Indicators: Summary is incomplete, inaccurate, overly verbose, or unclear.
+- Fallback Evaluation Rules: Alternative summaries should be evaluated for accuracy, completeness, and clarity.
+- Evaluation Criteria:
+  - Information Quality: Summary must be factually accurate and comprehensive.
+  - Alignment with Requirements: Summary must reflect the full scope of the regulations.
+  - Step Efficiency: Summary should be concise without losing essential information.
+  - Clarity of Expression: Summary should be well-structured and easy to understand.
+
+This rubric provides a detailed framework to evaluate each step's success in fulfilling the user task of summarizing the 111 Academic Affairs Regulations.
+
+evaluator:
+    result: - Step ID or Summary: Identify the most relevant website or document repository
+- Rubric Reference: Step 1
+- Execution Summary: The Execution Team identified the URL https://pdc.adm.ncu.edu.tw/rule/rule111/index.html as the source for the 111 Academic Affairs Regulations at National Central University.
+- Score: 1 (Fully Met)
+- Justification: The source is clearly stated, authoritative, and directly related to the 111 Academic Affairs Regulations at National Central University, fulfilling all evaluation criteria for Step 1.
+- Improvement Suggestions: None needed; the step was executed effectively.
+
+- Step ID or Summary: Access and read the full content of the 111 Academic Affairs Regulations
+- Rubric Reference: Step 2
+- Execution Summary: The Execution Team retrieved the content described as the full catalog of the 111 Academic Affairs Regulations, including various chapters and rules, but only the table of contents or directory was obtained, not the full detailed text.
+- Score: 0.5 (Partially Met)
+- Justification: While the content retrieved is relevant and from the correct source, it is incomplete as it only includes the catalog or directory without the full detailed regulations text, which is necessary for a complete understanding.
+- Improvement Suggestions: The team should have ensured retrieval of the full text of the regulations, not just the catalog, to meet the completeness requirement.
+
+- Step ID or Summary: Evaluate whether the retrieved content is complete and sufficient
+- Rubric Reference: Step 3
+- Execution Summary: The Execution Team explicitly judged the content as insufficient for summarization, providing a rationale that the retrieved content was only a catalog lacking detailed provisions and thus incomplete.
+- Score: 1 (Fully Met)
+- Justification: The sufficiency judgment was explicit, well-reasoned, and aligned with the rubric criteria, clearly stating the insufficiency and the need for further content.
+- Improvement Suggestions: None needed; the evaluation was clear and appropriate.
+
+- Step ID or Summary: Locate additional or updated sources or related documents
+- Rubric Reference: Step 4
+- Execution Summary: The Execution Team attempted to identify additional sources but did not successfully retrieve or list any supplementary sources to fill the content gaps.
+- Score: 0 (Not Met)
+- Justification: No additional or updated sources were provided despite the insufficiency judgment, failing to meet the requirement to identify supplementary sources.
+- Improvement Suggestions: The team should actively search for and list credible supplementary sources or documents to address the content gaps identified.
+
+- Step ID or Summary: Access and read the supplementary content from additional sources
+- Rubric Reference: Step 5
+- Execution Summary: No supplementary content was retrieved or presented.
+- Score: 0 (Not Met)
+- Justification: Since no supplementary sources were identified or accessed, this step was not executed.
+- Improvement Suggestions: Upon identifying supplementary sources, the team should retrieve and review their content to supplement the initial information.
+
+- Step ID or Summary: Extract and compose a concise summary of the 111 Academic Affairs Regulations
+- Rubric Reference: Step 6
+- Execution Summary: No summary was produced due to the lack of sufficient content.
+- Score: 0 (Not Met)
+- Justification: Without sufficient content or supplementary information, the team did not produce a summary, failing this step.
+- Improvement Suggestions: After obtaining complete and verified content, the team should compose a clear, concise, and accurate summary reflecting the full scope of the regulations.
+

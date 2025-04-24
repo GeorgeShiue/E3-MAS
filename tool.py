@@ -26,11 +26,17 @@ EXECUTION_CHAT_LOG_FILEPATH = "Outputs/execution_chat_log.txt"
 EVALUATION_CHAT_LOG_FILEPATH = "Outputs/evaluation_chat_log.txt"
 
 agent_parameter_yaml_path = "agent_parameter_base.yaml"
+# executor_name = ""
 
 def set_agent_parameter_yaml_path(path):
     """Set the path of agent_parameter.yaml file."""
     global agent_parameter_yaml_path
     agent_parameter_yaml_path = path
+
+# def set_executor_name(name):
+#     """Set the name of executor."""
+#     global executor_name
+#     executor_name = name
 
 class WebExecutionTool():
     def __init__(self, user_id = "1130"):
@@ -191,11 +197,9 @@ class WebExecutionTool():
         result = self.selenium_controller.create_browser(self.current_user_id)
         return result
 
-
 # TODO 可以創建一個All Tools class
 class SearchExecutionTool():
     def __init__(self):
-        # define tool list
         self.tool_list = [
             website_info_retriever,
             website_links_crawler,
@@ -205,7 +209,6 @@ class SearchExecutionTool():
 
         # define tool dict from tool list
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
-
 
 class EvaluationTool():
     def __init__(self):
@@ -240,7 +243,6 @@ class EvaluationTool():
             print("Execution chat log has been retrieved.")
             return ''.join(content)
 
-        # define tool list
         self.tool_list = [
             read_user_query_and_plan,
             read_execution_chat_log,
@@ -253,6 +255,7 @@ class EvolutionTool():
     def __init__(self):
         self.execution_chat_log_path = ""
         self.evaluation_chat_log_path = ""
+        self.executor_name = ""
 
         @tool
         def read_user_query_and_plan() -> str:
@@ -285,7 +288,34 @@ class EvolutionTool():
             print("Evaluation result has been retrieved.\n")
             return "\n".join(evaluator_content)
 
-        # define tool list
+        @tool
+        def read_execution_team_agents_prompt(agent_name: str) -> str:
+            """Read the specified agent's system prompt. The agent is one of the member in execution team."""
+            agents_parameter = read_agent_parameter_yaml()
+
+            if "executor" in agent_name or "Executor" in agent_name:
+                agent_name = self.executor_name
+            
+            print(f"{agent_name} system prompt has been retrieved.")
+            return agents_parameter[agent_name]["prompt"]
+
+        @tool
+        def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
+            """Write the updated system prompt of specified agent to the YAML file."""
+            # with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
+            #     f.write(f"{agent_name}:\n{updated_prompt}")
+
+            if "executor" in agent_name or "Executor" in agent_name:
+                agent_name = self.executor_name
+
+            agent_parameter = read_agent_parameter_yaml()
+            agent_parameter[agent_name]["prompt"] = updated_prompt
+            with open(agent_parameter_yaml_path, 'w', encoding="utf-8") as f:
+                yaml.dump(agent_parameter, f, allow_unicode=True)
+
+            print(f"{agent_name} updated prompt saved successfully.\n")
+            return f"{agent_name} updated prompt saved successfully."
+
         self.tool_list = [
             read_user_query_and_plan,
             read_evaluation_result,
@@ -295,6 +325,8 @@ class EvolutionTool():
 
         # define tool dict from tool list
         self.tool_dict = {tool.name: tool for tool in self.tool_list}
+
+
 
 def read_agent_parameter_yaml():
     """Read the agent_parameter.yaml file and return the content."""
@@ -332,13 +364,15 @@ def website_info_retriever(query: str) -> str:
     
     return result
 
-async def process_link(link, url, websites):
+async def process_link(link, url, websites: list):
     title = link.get_text(strip=True)
     if title == '':
+        print(f"無法獲取連結標題，跳過連結: {link}")
         return
 
     href = link.get('href')
     if not href:
+        print(f"無法獲取連結網址，跳過連結: {link}")
         return
 
     final_url = ""
@@ -361,9 +395,11 @@ async def process_link(link, url, websites):
             async with session.get(final_url, timeout=3, ssl=False) as response:
                 if response.status == 200:
                     encoding = response.charset or 'utf-8'
-                    websites.append({'title': title, 'link': final_url})
+                    websites.append({'title': title, 'link': final_url}) # 連結測試回應成功，加入爬取清單
+                else:
+                    print(f"[{title}]: [{final_url}]測試回應失敗，不加入爬取清單，HTTP 狀態碼: {response.status}")
     except Exception as e:
-        print(f"無法獲取[{title}]: [{final_url}] ，錯誤: {e}")
+        print(f"[{title}]: [{final_url}]測試回應失敗，不加入爬取清單，錯誤: {e}")
 
 async def crawl_links_async(links, base_url):
     websites = []
@@ -383,7 +419,7 @@ def website_links_crawler(link: str) -> str:
         response.encoding = encoding
     except requests.exceptions.RequestException as e:
         print(f"無法獲取 [{url}] 。錯誤: {e}")
-        return f"無法獲取 [{url}] 。錯誤: {e}"
+        return f"Can not access [{url}] . Error: {e}"
 
     websites = []
     result = ""
@@ -404,7 +440,7 @@ def website_links_crawler(link: str) -> str:
         return result
     else:
         print(f"無法獲取 [{url}] 。HTTP 狀態碼: {response.status_code}")
-        return f"無法獲取 [{url}] 。HTTP 狀態碼: {response.status_code}"
+        return f"Can not access [{url}] . HTTP status code: {response.status_code}"
 
 @tool
 def website_reader(url: str) -> str:
@@ -415,14 +451,13 @@ def website_reader(url: str) -> str:
         response.encoding = encoding
     except requests.exceptions.RequestException as e:
         print(f"無法獲取 [{url}] 。錯誤: {e}")
-        return f"無法獲取 [{url}] 。錯誤: {e}"
+        return f"Can not access [{url}] . Error: {e}"
     
     soup = BeautifulSoup(response.text, 'html.parser')
     content = soup.get_text()
-    print(f"成功讀取 [{url}] 內文。")
-
     cleaned_content = "\n".join([line for line in content.split("\n") if line.strip()])
-    print(cleaned_content)
+    
+    print(f"成功讀取 [{url}] 內文：\n{cleaned_content}")
     return cleaned_content
 
 @tool
@@ -434,7 +469,7 @@ def pdf_reader(url: str) -> str:
         response.encoding = encoding
     except requests.exceptions.RequestException as e:
         print(f"無法獲取PDF。錯誤: {e}")
-        return f"無法獲取PDF。錯誤: {e}"
+        return f"Can not access PDF. Error: {e}"
 
     if response.status_code == 200:
         pdf_file = BytesIO(response.content)
@@ -447,30 +482,8 @@ def pdf_reader(url: str) -> str:
         print(f"成功讀取 [{url}] 內文：\n{pdf_text}")
         return pdf_text
     else:
-        print(f"下載失敗，HTTP 狀態碼: {response.status_code}")
-        return f"下載失敗，HTTP 狀態碼: {response.status_code}"
-
-@tool
-def read_execution_team_agents_prompt(agent_name: str) -> str:
-    """Read the specified agent's system prompt. The agent is one of the member in execution team."""
-    agents_parameter = read_agent_parameter_yaml()
-    
-    print(f"{agent_name} system prompt has been retrieved.")
-    return agents_parameter[agent_name]["prompt"]
-
-@tool
-def write_updated_agent_prompt(agent_name: str, updated_prompt: str) -> None:
-    """Write the updated system prompt of specified agent to the YAML file."""
-    # with open('Outputs/updated_agent_prompt.txt', 'w', encoding="utf-8") as f:
-    #     f.write(f"{agent_name}:\n{updated_prompt}")
-
-    agent_parameter = read_agent_parameter_yaml()
-    agent_parameter[agent_name]["prompt"] = updated_prompt
-    with open(agent_parameter_yaml_path, 'w', encoding="utf-8") as f:
-        yaml.dump(agent_parameter, f, allow_unicode=True)
-
-    print(f"{agent_name} updated prompt saved successfully.\n")
-    return f"{agent_name} updated prompt saved successfully."
+        print(f"PDF下載失敗，HTTP 狀態碼: {response.status_code}")
+        return f"PDF download failed, HTTP status code: {response.status_code}"
 
 
 

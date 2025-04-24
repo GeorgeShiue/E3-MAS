@@ -69,7 +69,7 @@ class AgentFactory():
 
 class GraphFactory():
     @staticmethod
-    def save_graph_mermaid(app: CompiledStateGraph, graph_name): # TODO 可以歸入utils
+    def save_graph_mermaid(app: CompiledStateGraph, graph_name):
 
         graph_bytes = app.get_graph(xray=True).draw_mermaid_png()
         

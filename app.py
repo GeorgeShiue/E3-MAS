@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 import shutil
 import time
 from dotenv import load_dotenv
@@ -24,6 +25,10 @@ def clear_chat_log(chat_log_path):
 def write_chat_log(chat_log_path, content):
     with open(chat_log_path, "a", encoding='utf-8') as f:
         f.write(content)
+
+def write_scores_progress_rate(file_path, scores, progress_rate):
+    with open(file_path, "a", encoding='utf-8') as f:
+        f.write(f"Scores: {scores}\nProgress Rate: {progress_rate:.2f}\n")
 
 def compute_progress_rate(x: List[float]) -> float:
     if not x:
@@ -51,19 +56,21 @@ def compute_progress_rate(x: List[float]) -> float:
     
     return max_progress
 
-async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_input, chat_log_path):
+async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_query, chat_log_path, scores_progess_rate_path=None):
     config = {"recursion_limit": 30}
     inputs = {
-        "input": user_input,
-        "history": [],
+        "input": user_query,
+        #　"history": [],
     }
+    if isinstance(graph_class, ExecutionGraph):
+        inputs["history"] = [] # TODO 也許可以在此幫 Execution Team 加入歷史紀錄(?
 
     # clear_chat_log(chat_log_path)
     write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
 
     # *若是 Execution Team 的 Web Executor，則等待瀏覽器初始化
     if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
-        graph_class.agent.wait_browser_init()
+        graph_class.wait_browser_init()
 
     try:
         async for event in graph_class.graph.astream(inputs, config=config):
@@ -76,6 +83,7 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
                     for key, value in state.items():
                         if key == "scores":
                             progress_rate = compute_progress_rate(value)
+                            write_scores_progress_rate(scores_progess_rate_path, value, progress_rate)
                             # write_chat_log(chat_log_path, f"\nProgress Rate: {progress_rate:.2f}\n")
                         elif key != "history":
                             write_chat_log(chat_log_path, f"    {key}: {value}\n")
@@ -85,7 +93,7 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
         print(f"GraphRecursionError: {e}")
         write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
 
-def run_app(user_input, executor_name, task, epoch):
+def run_app(user_query, executor_name, task, epoch):
     # input(f"Press Enter to start initializing environment and Execution Team for {task} in epoch {epoch}...")
     # print(f"Initializing environment and Execution Team for {task} in epoch {epoch}\n")
 
@@ -98,52 +106,65 @@ def run_app(user_input, executor_name, task, epoch):
     agent_parameter_yaml_path = os.path.join(epoch_folder_path, "agent_parameter.yaml")
     execution_chat_log_path = os.path.join(epoch_folder_path, "execution_chat_log.txt")
     evaluation_chat_log_path = os.path.join(epoch_folder_path, "evaluation_chat_log.txt")
+    scores_progess_rate_path = os.path.join(epoch_folder_path, "scores_progress_rate.txt")
     evolution_chat_log_path = os.path.join(epoch_folder_path, "evolution_chat_log.txt")
 
+    # *設定聊天紀錄讀取路徑
     evaluation_graph.set_execution_chat_log_path(execution_chat_log_path)
     evolution_graph.set_execution_and_evaluation_chat_log_path(execution_chat_log_path, evaluation_chat_log_path)
 
-    # *建立與清理資料夾路徑
+    # *重新設定資料夾路徑
     if os.path.exists(epoch_folder_path):
         shutil.rmtree(epoch_folder_path)
         print(f"Reset {epoch_folder_path}.")
     os.makedirs(epoch_folder_path, exist_ok=True)
     print(f"Set folder path to: {epoch_folder_path}")    
 
-    print(f"Environment and Execution Team for {task} in epoch {epoch} are initialized\n")
-
     # *將上個版本的 agent_parameter.yaml 複製到 epoch 資料夾內
-    # TODO 之後要改成複製上一個epoch的agent_parameter.yaml
     if epoch == 1:
         shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
     else:
         shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
     set_agent_parameter_yaml_path(agent_parameter_yaml_path)
 
-    # *若是 Execution Team 的 Web Executor，則設定截圖資料夾路徑
+    # *若是 Execution Team 的 Web Executor，設定截圖資料夾路徑並等待瀏覽器初始化
     if executor_name == "Web Executor":
         screenshot_folder_path = os.path.join(epoch_folder_path, "screenshot")
         execution_graph.set_screenshot_folder_path(screenshot_folder_path)
+        
+        execution_graph.wait_browser_init()
 
     # *啟動 Dynamic MAS
-    input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}...")
-    print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
+    print(f"\nEnvironment and Execution Team for {task} in epoch {epoch} are initialized")
+    command = input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
+    
+    if command.lower() == "exit":
+        shutil.rmtree(epoch_folder_path)
+
+        global exit
+        exit = True
+
+        print(f"End Dynamic MAS for {task} after complete epoch {epoch - 1}.")
+        return
+    else:
+        print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
+
     start_time = time.time()
 
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_input, execution_chat_log_path)) # *Test Execution Team
-    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path)) # *Test Evaluation Team
+    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_query, execution_chat_log_path)) # *Test Execution Team
+    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path, scores_progess_rate_path)) # *Test Evaluation Team
     loop.run_until_complete(run_graph_with_graph_class(evolution_graph, "Please analyze the evaluation result of the execution team.", evolution_chat_log_path)) # *Test Evolution Team
     loop.close()
 
     end_time = time.time()
+
     print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
 
     # * 測試 Execution Team 的 Web Executor 時，必須在這裡清除selenium controller的container
-    # if execution_graph.agent.executor_name == "Web Executor":
+    # if executor_name == "Web Executor":
     #     execution_graph.agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
 
-# * 初始化 Evaluation Team、Evolution Team
 evaluation_graph = EvaluationGraph() 
 evolution_graph = EvolutionGraph()
 
@@ -152,11 +173,30 @@ evolution_graph = EvolutionGraph()
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-user_input = "Please help me gather information related to scholarship applications." # *給 Execution Team 的使用者輸入
+user_query = "Who is the headmaster of National Central University in Taiwan?" # *給 Execution Team 的使用者輸入
+task = "Headmaster Name" # *記錄檔資料夾名稱
 executor_name = "Search Executor" # *"Search Executor" or "Web Executor"
-task = "Scholarship Application"
 max_epoch = 5
+exit = False
 
-# *測試 Dynamic MAS 多次迭代
-for epoch in range(max_epoch):
-    run_app(user_input, executor_name, task, epoch + 1)
+print(f"""
+Please confirm following parameters:
+    User Query: {user_query}
+    Task: {task}
+    Executor Name: {executor_name}
+    Max Epoch: {max_epoch}
+""")
+
+command = input("Press Enter to start running Dynamic MAS, or type 'exit' to exit: ")
+if command.lower() == "exit":
+    sys.exit(0)
+else:
+    evolution_graph.set_executor_name(executor_name)
+    print(f"Dynamic MAS start running.\n")
+
+    # *測試 Dynamic MAS 多次迭代
+    for epoch in range(max_epoch):
+        run_app(user_query, executor_name, task, epoch + 1)
+
+        if exit:
+            break

@@ -103,11 +103,11 @@ class ExecutionAgent():
         solver = solver_prompt | solver_llm
         return solver
     
-    def wait_browser_init(self):
-        if self.create_browser_thread.is_alive():
-            print("browser is starting...")
-            self.create_browser_thread.join()
-        print("browser is ready")
+    # def wait_browser_init(self):
+    #     if self.create_browser_thread.is_alive():
+    #         print("browser is starting...")
+    #         self.create_browser_thread.join()
+    #     print("browser is ready")
 
 class EvaluationAgent():
     class EvaluatorResponse(BaseModel):

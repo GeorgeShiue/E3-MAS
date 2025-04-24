@@ -103,6 +103,13 @@ class ExecutionGraph():
     
     def set_screenshot_folder_path(self, screenshot_folder_path):
         self.agent.tool.selenium_controller.screenshot_folder_path = screenshot_folder_path
+        print(f"Set screenshot folder path to: {screenshot_folder_path}")
+
+    def wait_browser_init(self):
+        if self.agent.create_browser_thread.is_alive():
+            print("browser is starting...")
+            self.agent.create_browser_thread.join()
+        print("browser is ready")
 
 class EvaluationGraph():
     class Evaluation(TypedDict):
@@ -148,7 +155,8 @@ class EvaluationGraph():
         return graph
     
     def set_execution_chat_log_path(self, execution_chat_log_path):
-        self.agent.tool.execution_chat_log_path = execution_chat_log_path    
+        self.agent.tool.execution_chat_log_path = execution_chat_log_path
+        print(f"Set execution chat log path to: {execution_chat_log_path} for Evaluation Graph")
 
 class EvolutionGraph():
     class Evolution(TypedDict):
@@ -191,6 +199,11 @@ class EvolutionGraph():
     def set_execution_and_evaluation_chat_log_path(self, execution_chat_log_path, evaluation_chat_log_path):
         self.agent.tool.execution_chat_log_path = execution_chat_log_path
         self.agent.tool.evaluation_chat_log_path = evaluation_chat_log_path
+        print(f"Set execution chat log path to: {execution_chat_log_path} and evaluation chat log path to: {evaluation_chat_log_path} for Evolution Graph")
+
+    def set_executor_name(self, executor_name):
+        self.agent.tool.executor_name = executor_name
+        print(f"Set executor name to: {executor_name} for Evolution Graph")
 
 if __name__ == "__main__":
     import asyncio
