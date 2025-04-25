@@ -68,8 +68,8 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
     # clear_chat_log(chat_log_path)
     write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
 
-    # *若是 Execution Team 的 Web Executor，則等待瀏覽器初始化
-    if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
+    # *若是 Execution Team 的 Pipeline Executor，則等待瀏覽器初始化
+    if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
         graph_class.wait_browser_init()
 
     try:
@@ -93,8 +93,8 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
         print(f"GraphRecursionError: {e}")
         write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
 
-    # * 測試 Execution Team 的 Web Executor 時，必須在這裡清除selenium controller的container
-    if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Web Executor":
+    # * 測試 Execution Team 的 Pipeline Executor 時，必須在這裡清除selenium controller的container
+    if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
         graph_class.agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
 
 def run_app(user_query, executor_name, task, epoch):
@@ -131,8 +131,8 @@ def run_app(user_query, executor_name, task, epoch):
         shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
     set_agent_parameter_yaml_path(agent_parameter_yaml_path)
 
-    # *若是 Execution Team 的 Web Executor，設定截圖資料夾路徑並等待瀏覽器初始化
-    if executor_name == "Web Executor":
+    # *若是 Execution Team 的 Pipeline Executor，設定截圖資料夾路徑並等待瀏覽器初始化
+    if executor_name == "Pipeline Executor":
         screenshot_folder_path = os.path.join(epoch_folder_path, "screenshot")
         os.makedirs(screenshot_folder_path, exist_ok=True)
         execution_graph.set_screenshot_folder_path(screenshot_folder_path)
@@ -146,7 +146,7 @@ def run_app(user_query, executor_name, task, epoch):
     if command.lower() == "exit":
         shutil.rmtree(epoch_folder_path)
 
-        if executor_name == "Web Executor":
+        if executor_name == "Pipeline Executor":
             execution_graph.agent.tool.selenium_controller.clean_containers()
 
         global exit
@@ -169,8 +169,8 @@ def run_app(user_query, executor_name, task, epoch):
 
     print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
 
-    # * 測試 Execution Team 的 Web Executor 時，必須在這裡清除selenium controller的container
-    # if executor_name == "Web Executor":
+    # * 測試 Execution Team 的 Pipeline Executor 時，必須在這裡清除selenium controller的container
+    # if executor_name == "Pipeline Executor":
     #     execution_graph.agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
 
 evaluation_graph = EvaluationGraph() 
@@ -183,7 +183,7 @@ evolution_graph = EvolutionGraph()
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
 user_query = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button." # *給 Execution Team 的使用者輸入
 task = "Leave Application" # *記錄檔資料夾名稱
-executor_name = "Web Executor" # *"Search Executor" or "Web Executor"
+executor_name = "Pipeline Executor" # *"Search Executor" or "Pipeline Executor"
 max_epoch = 5
 exit = False
 

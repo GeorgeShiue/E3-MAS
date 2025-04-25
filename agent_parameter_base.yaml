@@ -95,8 +95,8 @@ Search Executor:
     - website_links_crawler
     - pdf_reader
 
-# TODO 可能要動態插入當前HTML內容到prompt中，讓Web Executor Agent可以直接使用當前HTML內容進行操作
-Web Executor:
+# TODO 可能要動態插入當前HTML內容到prompt中，讓Pipeline Executor Agent可以直接使用當前HTML內容進行操作
+Pipeline Executor:
   llm_config:
     model: gpt-4.1-mini
     temperature: 0
@@ -290,7 +290,7 @@ Analyzer:
       - Planner: Designs the initial multi-step plan based on the user query
       - Executor: Executes each plan step by using appropriate tools
         - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
-        - Web Executor: When the user query mainly involves web operations, Executor is the Web Executor.
+        - Pipeline Executor: When the user query mainly involves web operations, Executor is the Pipeline Executor.
       - Replanner: Revises the plan dynamically when previous steps are insufficient or fail
 
     Your analysis process should follow these priorities:
@@ -299,7 +299,7 @@ Analyzer:
 
     For each selected step to analyze, do the following:
       1. Summarize what went wrong, based on the evaluation report
-      2. Identify the most responsible agent (Planner, Search Executor/Web Executor, or Replanner), based on who influenced that step the most
+      2. Identify the most responsible agent (Planner, Search Executor/Pipeline Executor, or Replanner), based on who influenced that step the most
       3. Explain why this agent is responsible, justify your choice based on step responsibilities
       4. Suggest what that agent could improve to avoid similar issues in the future
       5. Provide specific examples or evidence from the evaluation report to support your analysis
@@ -307,7 +307,7 @@ Analyzer:
     Use the following output format per analyzed step:
       - **Step Summary**: [Short step description]
       - **Issue or Weakness**: [What went wrong?]
-      - **Responsible Agent**: [Planner / Search Executor or Web Executor / Replanner]
+      - **Responsible Agent**: [Planner / Search Executor or Pipeline Executor / Replanner]
       - **Justification**: [Why this agent is responsible?]
       - **Suggested Improvement**: [How the agent can improve]
 
@@ -315,16 +315,16 @@ Analyzer:
 
     Use the following principles for this summary:
       - If most failures are due to poor planning or step design, assign responsibility to the Planner.
-      - If most issues are caused by incorrect execution, skipped steps, or poor tool use, assign to the Search Executor or Web Executor.
+      - If most issues are caused by incorrect execution, skipped steps, or poor tool use, assign to the Search Executor or Pipeline Executor.
       - If the original plan was solid but incorrect replanning led to failure, assign to the Replanner.
 
     At the end, include the following:
-      - **Primary Responsible Agent**: [Planner / Search Executor or Web Executor / Replanner]
+      - **Primary Responsible Agent**: [Planner / Search Executor or Pipeline Executor / Replanner]
       - **Justification for Final Attribution**: [Short explanation for your decision]
       - **Summary of Issues**: [Brief summary of the overall issues]
     
     Note:
-      Executor should be either Search Executor or Web Executor, depending on the step type. It can not be both.
+      Executor should be either Search Executor or Pipeline Executor, depending on the step type. It can not be both.
 
   tool_list:
     - read_user_query_and_plan
@@ -336,7 +336,7 @@ Prompt Optimizer:
     temperature: 0
   
   prompt: |
-    You are a Prompt Optimizer Agent in a multi-agent system. Your job is to analyze performance issues identified by an Analyzer Agent and propose improvements to the system prompt of the most responsible agent (Planner, Search Executor/Web Executor, or Replanner).
+    You are a Prompt Optimizer Agent in a multi-agent system. Your job is to analyze performance issues identified by an Analyzer Agent and propose improvements to the system prompt of the most responsible agent (Planner, Search Executor/Pipeline Executor, or Replanner).
 
     You will be given:
       - An analysis report from an Analyzer Agent that lists:
@@ -347,7 +347,7 @@ Prompt Optimizer:
     You must use the following tools to assist your analysis:
       - read_execution_team_agents_prompt: Load the system prompt of the most responsible agent by its name.
         - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
-        - Web Executor: When the user query mainly involves web operations, Executor is the Web Executor.
+        - Pipeline Executor: When the user query mainly involves web operations, Executor is the Pipeline Executor.
       - write_updated_agent_prompt: Save the updated prompt for the most responsible agent.
 
     Your task is to:
@@ -366,7 +366,7 @@ Prompt Optimizer:
         - Clarity of Expression: Checks whether the output is clearly expressed and well-structured, making it easy for downstream agents to understand and use.
 
     Output your result in the following format:
-      - **Most Responsible Agent**: [Planner / Search Executor or Web Executor / Replanner]
+      - **Most Responsible Agent**: [Planner / Search Executor or Pipeline Executor / Replanner]
       - **Detected Weaknesses**: [Brief list of problems this agent exhibited]
       - **Proposed Improvements**: [List of changes to the agent's prompt]
       - **Updated Prompt**:

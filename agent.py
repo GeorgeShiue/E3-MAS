@@ -44,7 +44,7 @@ class ExecutionAgent():
         if self.executor_name == "Search Executor":
             execution_tool = SearchExecutionTool()
             return execution_tool
-        elif self.executor_name == "Web Executor":
+        elif self.executor_name == "Pipeline Executor":
             execution_tool = WebExecutionTool()
 
             # *啟動瀏覽器初始化執行緒
@@ -56,7 +56,7 @@ class ExecutionAgent():
 
             return execution_tool
         else:
-            raise ValueError("Invalid Executor name. Choose 'Search Executor' or 'Web Executor'.")
+            raise ValueError("Invalid Executor name. Choose 'Search Executor' or 'Pipeline Executor'.")
 
     def create_planner_agent(self):
         # * Plannger Agent 使用 ChatPromptTemplate.from_messages() 搭配 with_structured_output(Plan) 實現
@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     # *Test Execution Agent
 
-    # executor_name = "Web Executor" # "Search Executor" or "Web Executor"
+    # executor_name = "Pipeline Executor" # "Search Executor" or "Pipeline Executor"
     # execution_agent = ExecutionAgent(executor_name)
 
     # planner = execution_agent.planner
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     # for step in response.steps:
     #     print(step)
 
-    # if execution_agent.executor_name == "Web Executor":
+    # if execution_agent.executor_name == "Pipeline Executor":
     #     execution_agent.wait_browser_init()
     
     # responses = []
@@ -226,5 +226,5 @@ No other steps were scored as Partially Met or Not Met, and the fully met steps 
     print(f"Execution time: {end_time - start_time} seconds")
 
     # TODO 清除過程使用Threading
-    # if execution_agent.executor_name == "Web Executor":
+    # if execution_agent.executor_name == "Pipeline Executor":
     #     execution_agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
