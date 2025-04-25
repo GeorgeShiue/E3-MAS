@@ -148,7 +148,7 @@ def run_app(user_query, executor_name, task, epoch):
 
         if executor_name == "Web Executor":
             execution_graph.agent.tool.selenium_controller.clean_containers()
-            
+
         global exit
         exit = True
 
@@ -181,9 +181,9 @@ evolution_graph = EvolutionGraph()
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-user_query = "Who is the headmaster of National Central University in Taiwan?" # *給 Execution Team 的使用者輸入
-task = "Headmaster Name" # *記錄檔資料夾名稱
-executor_name = "Search Executor" # *"Search Executor" or "Web Executor"
+user_query = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button." # *給 Execution Team 的使用者輸入
+task = "Leave Application" # *記錄檔資料夾名稱
+executor_name = "Web Executor" # *"Search Executor" or "Web Executor"
 max_epoch = 5
 exit = False
 
