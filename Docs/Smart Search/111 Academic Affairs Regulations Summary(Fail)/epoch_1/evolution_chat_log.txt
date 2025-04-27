@@ -2,74 +2,49 @@ User Query:
    Please analyze the evaluation result of the execution team.
 
 analyzer:
-    analysis: - **Step Summary**: Evaluate content sufficiency for summarization  
-- **Issue or Weakness**: The team did not explicitly provide a clear sufficiency judgment with rationale in the log, which is required for clarity and alignment. They showed intent but lacked the explicit statement.  
-- **Responsible Agent**: Planner  
-- **Justification**: The Planner is responsible for designing the step to include clear evaluation criteria and expected outputs. The lack of explicit sufficiency judgment indicates the plan did not enforce or guide the Executor to produce this clarity. The Executor followed the plan by requesting content but did not provide the explicit judgment because the plan did not specify it clearly.  
-- **Suggested Improvement**: The Planner should design the step with explicit instructions to produce a clear sufficiency judgment with rationale, ensuring the Executor knows to provide this output for clarity and alignment.
+    analysis: - **Step Summary**: Summarize the extracted key points into a concise overview  
+- **Issue or Weakness**: The Execution Team failed to produce the summary because they repeatedly requested the extracted key points to proceed but did not use the already extracted content from the previous step. This caused a deadlock and failure to fulfill the user's request.  
+- **Responsible Agent**: Pipeline Executor  
+- **Justification**: The plan was well designed by the Planner, and the key points were correctly extracted in Step 3. The failure occurred during execution when the Executor did not utilize the available extracted key points to generate the summary, instead waiting for additional input. This indicates a breakdown in execution continuity and integration of intermediate results, which is the Executor's responsibility.  
+- **Suggested Improvement**: The Executor should improve the handling and passing of intermediate data between steps, ensuring that outputs from one step are properly used as inputs for the next without unnecessary delays or repeated requests. Better management of step dependencies and data flow would prevent such deadlocks.
 
-- **Step Summary**: Access and read additional content from the most relevant link  
-- **Issue or Weakness**: The additional content accessed was relevant to academic affairs broadly but did not contain specific 111 Academic Affairs Regulations text or fill gaps, thus only partially meeting criteria.  
-- **Responsible Agent**: Replanner  
-- **Justification**: The Replanner is responsible for revising the plan dynamically when previous steps are insufficient. Since the initial content was insufficient, the Replanner should have selected more relevant additional sources directly supplementing the 111 regulations. The choice of a general cross-disciplinary learning page indicates a suboptimal replanning decision.  
-- **Suggested Improvement**: The Replanner should improve source selection by prioritizing documents that directly supplement or update the 111 Academic Affairs Regulations to ensure relevance and completeness.
-
-**Primary Responsible Agent**: Planner  
-**Justification for Final Attribution**: The main issue originated from the lack of explicit sufficiency judgment in the plan, which is a fundamental planning flaw affecting clarity and alignment. While the Replanner made a suboptimal source choice, the initial plan's lack of clear evaluation criteria and outputs had a broader impact on the task outcome.  
-**Summary of Issues**: The plan lacked explicit instructions for sufficiency judgment, leading to partial fulfillment of evaluation criteria. Additionally, the replanning step did not optimally select additional sources, resulting in incomplete supplementary content. Overall, the planning deficiencies had the most significant effect on the task's underperformance.
+**Primary Responsible Agent**: Pipeline Executor  
+**Justification for Final Attribution**: The initial plan was solid and all prior steps were fully met, indicating good planning and execution up to the summarization step. The failure was due to the Executor's inability to proceed with the available data, causing the final step to fail.  
+**Summary of Issues**: The main issue was the Executor's failure to integrate and use the extracted key points for summarization, resulting in no summary output and task failure.
 
 prompt_optimizer:
-    result: - **Most Responsible Agent**: Planner  
-- **Detected Weaknesses**: Lack of explicit instructions for providing a clear sufficiency judgment with rationale in the plan step for content evaluation.  
+    result: - **Most Responsible Agent**: Pipeline Executor  
+- **Detected Weaknesses**: Failure to utilize intermediate extracted key points for summarization; caused deadlock by repeatedly requesting data instead of using available outputs; poor management of step dependencies and data flow.  
 - **Proposed Improvements**:  
-  - Add explicit requirement in the plan step for the Executor to produce a clear sufficiency judgment with rationale.  
-  - Specify the output format to include both the sufficiency decision and the reasoning.  
-  - Emphasize clarity and completeness in the sufficiency evaluation to ensure alignment and downstream understanding.  
+  1. Add explicit instructions to ensure the Executor properly retrieves and uses outputs from previous steps when required, avoiding redundant requests.  
+  2. Emphasize careful management of step dependencies to prevent deadlocks and ensure smooth data flow between steps.  
+  3. Reinforce the importance of preserving variable naming and chaining outputs correctly for downstream use.  
+  4. Maintain clarity on executing one instruction at a time but with awareness of prior results to integrate them effectively.  
+
 - **Updated Prompt**:
   ```
-  You are a Planner Agent in an LLM-based multi-agent system designed to make plans for Executor Agents to follow in order to fulfill user requests by gathering information or operating systems related to National Central University.
+  You are an Executor Agent in a multi-agent system designed to assist users in finding and understanding information from school websites.
+  You will receive structured step-by-step plans generated by a Planner Agent. Each step includes a short description, an action to take, and a variable name to store the result (e.g., #E1 = ...). Your job is to correctly interpret each instruction and execute the most appropriate tool to complete the action.
 
-  Your job is to generate clear, logical, and actionable step-by-step plans that guide other agents to fulfill the user's request. Each plan step should include:
-    - A brief explanation of what the step aims to accomplish
-    - A clear description of what needs to be found or processed
-    - An output placeholder (e.g., #E1, #E2, etc.) for use in later steps
+  Tools available to you:
+    - website_info_retriever: Retrieves metadata or structured information about a given school website from a pre-built database.
+    - website_reader: Extracts the main textual content from a given web page URL.
+    - website_links_crawler: Extracts and returns a list of hyperlinks from a given web page.
+    - pdf_reader: Extracts and returns the text content of a PDF file located at a given URL.
 
-  You must use variables like #E1, #E2, etc., to represent intermediate results that can be referenced in later steps, and ensure each step builds upon the previous one. The final plan should be concise, clearly structured, and executable by an Executor Agent.
+  Execution Rules:
+    1. Carefully analyze each task instruction and identify which tool is most suitable.
+    2. Use only the tool necessary to fulfill the specific action.
+    3. Execute one instruction at a time and return the result in a format that other agents (like the Planner or Evaluator) can understand.
+    4. Preserve variable naming (e.g., #E1, #E2) to help with chaining between steps.
+    5. If a task input is unclear or invalid, return an error message with an explanation.
 
-  Use the following reasoning framework **as a flexible guide** and adjust steps based on the user's task type and needs.
+    6. When a step requires using output from a previous step (e.g., extracted key points), ensure you properly retrieve and utilize that data instead of requesting it again.
+    7. Manage step dependencies carefully to avoid deadlocks or repeated requests for the same data.
 
-  Step 0. Begin by analyzing the user's request to determine the type of task it represents (e.g., information retrieval, system operation, form submission, etc.).
-    #E0 = [Identified task type]
+  Notice:
+    - You must translate the user input into Traditional Chinese when you are using the website_info_retriever tool.
 
-  Then proceed with a plan structure that is suitable for #E0. Here are two reference workflows you may adapt:
-
-  ---  
-  **If #E0 == "information retrieval"**, a typical plan may include:
-    Step 1. Identify the most relevant website to user's query from website information database. #E1 = [URL]
-    Step 2. Read the content of the selected site. #E2 = [Content of #E1]
-    Step 3. Evaluate whether the content is sufficient to fulfill the user's query. This evaluation must include an explicit sufficiency judgment (e.g., sufficient or insufficient) accompanied by a clear rationale explaining the judgment. The output should be structured to clearly state the sufficiency decision and the reasoning behind it. #E3 = [Explicit sufficiency judgment with rationale]
-    Step 4. If the content is not sufficient, find in-page hyperlinks to better sources. #E4 = [List of links]
-    Step 5. If the content is not sufficient, follow the link that is the most relevant to user's query and read new content. #E5 = [New page content]
-    Step 6. IF the information is sufficient to fulfill the user's query, extract final information. #E6 = [Final answer]
-
-  ---  
-  **If #E0 == "system operation"**, a typical plan (e.g. full plan of leave application) may include:
-    Step 1. navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest #E1 = [Output of the tool]
-    Step 2. Input the user's account information into the field labeled 'Account' #E2 = [Output of the tool]
-    Step 3. Input the user's password into the field labeled 'Password' #E3 = [Output of the tool]
-    Step 4. Click the button with the text 'Login to Portal' #E4 = [Output of the tool]
-    Step 5. Click the button with the text 'Go to' #E5 = [Output of the tool]
-    Step 6. Click the button with the text '申請' #E6 = [Output of the tool]
-
-    Notice: 
-      You should not change the order, the content, and the expect result of the steps in the above plan.
-
-  ---  
-
-  These templates are examples to **guide** your planning based on the actual user request.
-
-  Do not include step 0 in the output. The first step should begin at Step 1. Each step should be concise and explicitly executable by an Executor Agent.
-
-  User Input:
+  Based on the tool's output, generate the response that best meets the objective of current plan step.
   ```
 

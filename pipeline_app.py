@@ -19,9 +19,15 @@ def write_chat_log(chat_log_path, content):
     with open(chat_log_path, "a", encoding='utf-8') as f:
         f.write(content)
 
+def write_execution_result_time(file_path, execution_result, execution_time):
+    with open(file_path, "a", encoding='utf-8') as f:
+        f.write(f"Execution Team Result: {execution_result}\n")
+        f.write(f"Execution Team Run Time: {execution_time:.2f} seconds\n")
+
 def write_scores_progress_rate(file_path, scores, progress_rate):
     with open(file_path, "a", encoding='utf-8') as f:
-        f.write(f"Scores: {scores}\nProgress Rate: {progress_rate:.2f}\n")
+        f.write(f"Scores: {scores}\n")
+        f.write(f"Progress Rate: {progress_rate:.2f}\n")
 
 def compute_progress_rate(x: List[float]) -> float:
     if not x:
@@ -49,38 +55,45 @@ def compute_progress_rate(x: List[float]) -> float:
     
     return max_progress
 
-async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_query, chat_log_path, scores_progess_rate_path=None):
+async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_query, chat_log_path, meta_data_path=None):
     config = {"recursion_limit": 30}
     inputs = {
         "input": user_query,
-        #　"history": [],
     }
+    write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
+    
     if isinstance(graph_class, ExecutionGraph):
         inputs["history"] = [] # TODO 也許可以在此幫 Execution Team 加入歷史紀錄(?
-
-    write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
 
     # *若是 Execution Team 的 Pipeline Executor，則等待瀏覽器初始化
     if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
         graph_class.wait_browser_init()
 
+    start_time = time.time() # 計算執行時間
+    execution_result = ""
+
     try:
         async for event in graph_class.graph.astream(inputs, config=config):
             for agent, state in event.items():
-                if agent == "Solver": # 輸出最終回覆給使用者檢視
+                if agent == "Solver": # *出最終回覆給使用者檢視
                     print("Execution Team Result: " + state["response"] + "\n")
+                    execution_result = state["response"]
                 elif agent != "__end__": # 記錄聊天紀錄
                     write_chat_log(chat_log_path, f"{agent}:\n")
                     
                     for key, value in state.items():
                         if key == "scores":
                             progress_rate = compute_progress_rate(value)
-                            write_scores_progress_rate(scores_progess_rate_path, value, progress_rate)
+                            write_scores_progress_rate(meta_data_path, value, progress_rate)
                             # write_chat_log(chat_log_path, f"\nProgress Rate: {progress_rate:.2f}\n")
                         elif key != "history":
                             write_chat_log(chat_log_path, f"    {key}: {value}\n")
 
                     write_chat_log(chat_log_path, "\n")
+
+        end_time = time.time()
+        if isinstance(graph_class, ExecutionGraph): # *紀錄 Execution Team 的執行時間
+            write_execution_result_time(meta_data_path, execution_result, end_time - start_time)
     except GraphRecursionError as e:
         print(f"GraphRecursionError: {e}")
         write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
@@ -93,7 +106,7 @@ def run_app(user_query, executor_name, task, epoch):
     # input(f"Press Enter to start initializing environment and Execution Team for {task} in epoch {epoch}...")
     # print(f"Initializing environment and Execution Team for {task} in epoch {epoch}\n")
     
-    start_time = time.time() # *計算初始化時間
+    start_time = time.time() # 計算初始化時間
 
     execution_graph = ExecutionGraph(executor_name) # *每次迭代皆須初始化 Execution Team
 
@@ -104,7 +117,7 @@ def run_app(user_query, executor_name, task, epoch):
     agent_parameter_yaml_path = os.path.join(epoch_folder_path, "agent_parameter.yaml")
     execution_chat_log_path = os.path.join(epoch_folder_path, "execution_chat_log.txt")
     evaluation_chat_log_path = os.path.join(epoch_folder_path, "evaluation_chat_log.txt")
-    scores_progess_rate_path = os.path.join(epoch_folder_path, "scores_progress_rate.txt")
+    metadata_path = os.path.join(epoch_folder_path, "metadata.txt")
     evolution_chat_log_path = os.path.join(epoch_folder_path, "evolution_chat_log.txt")
 
     # *設定聊天紀錄讀取路徑
@@ -120,9 +133,6 @@ def run_app(user_query, executor_name, task, epoch):
 
     # *將上個版本的 agent_parameter.yaml 複製到 epoch 資料夾內
     if epoch == 1:
-        if os.path.exists(os.path.join(task_folder_path, "agent_parameter_base.yaml")):
-            os.remove(os.path.join(task_folder_path, "agent_parameter_base.yaml"))
-        shutil.copy("agent_parameter_base.yaml", os.path.join(task_folder_path, "agent_parameter_base.yaml")) # epoch 1 時複製一份屬於此任務的 agent_parameter_base.yaml
         shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
     else:
         shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
@@ -159,11 +169,11 @@ def run_app(user_query, executor_name, task, epoch):
     else:
         print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
 
-    start_time = time.time() # *計算執行時間
+    start_time = time.time() # 計算總執行時間
 
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_query, execution_chat_log_path)) # *Test Execution Team
-    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path, scores_progess_rate_path)) # *Test Evaluation Team
+    loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_query, execution_chat_log_path, metadata_path)) # *Test Execution Team
+    loop.run_until_complete(run_graph_with_graph_class(evaluation_graph, "Please evaluate the performance of execution team.", evaluation_chat_log_path, metadata_path)) # *Test Evaluation Team
     loop.run_until_complete(run_graph_with_graph_class(evolution_graph, "Please analyze the evaluation result of the execution team.", evolution_chat_log_path)) # *Test Evolution Team
     loop.close()
 
@@ -171,11 +181,7 @@ def run_app(user_query, executor_name, task, epoch):
 
     print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
 
-    # * 測試 Execution Team 的 Pipeline Executor 時，必須在這裡清除selenium controller的container
-    # if executor_name == "Pipeline Executor":
-    #     execution_graph.agent.tool.selenium_controller.clean_containers() # *selenium controller解構子有問題，必須runtime內清除
-
-evaluation_graph = EvaluationGraph() 
+evaluation_graph = EvaluationGraph()
 evolution_graph = EvolutionGraph()
 
 # *設定任務
@@ -201,7 +207,20 @@ command = input("Press Enter to start running Dynamic MAS, or type 'exit' to exi
 if command.lower() == "exit":
     sys.exit(0)
 else:
+    # *重新設定資料夾路徑
+    task_folder_path = os.path.join("App Outputs", task)
+    if os.path.exists(task_folder_path):
+        shutil.rmtree(task_folder_path)
+        print(f"Reset {task_folder_path}.")
+    os.makedirs(task_folder_path, exist_ok=True)
+
+    if os.path.exists(os.path.join(task_folder_path, "agent_parameter_base.yaml")):
+        os.remove(os.path.join(task_folder_path, "agent_parameter_base.yaml"))
+        print(f"Reset agent_parameter_base.yaml.")
+    shutil.copy("agent_parameter_base.yaml", os.path.join(task_folder_path, "agent_parameter_base.yaml"))
+
     evolution_graph.set_executor_name(executor_name)
+
     print(f"Dynamic MAS start running.\n")
 
     # *測試 Dynamic MAS 多次迭代

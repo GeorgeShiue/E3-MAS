@@ -1,0 +1,121 @@
+User Query:
+   Please evaluate the performance of execution team.
+
+critic:
+    rubric: Evaluation Rubric for Plan Steps:
+
+Step 1: Identify the most relevant website related to scholarship applications at National Central University.
+- Step Objective: Locate the primary web resource that contains scholarship application information for National Central University.
+- Linked Requirements: Requirement to find authoritative and relevant source material (#E1).
+- Expected Input/Output: Input - User query; Output - URL of the relevant website.
+- Failure Indicators: URL is unrelated, outdated, or not specific to scholarship applications at National Central University.
+- Fallback Evaluation Rules: If a different but still relevant URL is identified later, evaluate based on relevance and authority.
+- Evaluation Criteria:
+  - Information Quality: URL must be accurate and directly related to scholarship applications.
+  - Alignment with Requirements: Must address the user's request for scholarship info at NCU.
+  - Step Efficiency: Should be direct without unnecessary searching.
+  - Clarity of Expression: URL and source description should be clearly presented.
+
+Step 2: Read the content of the selected website to gather detailed information about scholarship applications.
+- Step Objective: Extract detailed content from the identified website for further analysis.
+- Linked Requirements: Requirement to obtain content from the URL (#E2).
+- Expected Input/Output: Input - URL from Step 1; Output - Text content of the webpage.
+- Failure Indicators: Content is incomplete, irrelevant, or not properly extracted.
+- Fallback Evaluation Rules: If content is partially read or from a similar page, evaluate completeness and relevance.
+- Evaluation Criteria:
+  - Information Quality: Content must be accurate and comprehensive.
+  - Alignment with Requirements: Content should pertain specifically to scholarship applications.
+  - Step Efficiency: Content extraction should avoid unnecessary data.
+  - Clarity of Expression: Extracted content should be well-structured and readable.
+
+Step 3: Evaluate whether the content is sufficient to provide comprehensive information about scholarship applications.
+- Step Objective: Assess if the gathered content fully addresses the scholarship application information needs.
+- Linked Requirements: Content sufficiency judgment (#E3).
+- Expected Input/Output: Input - Content from Step 2; Output - Judgment on sufficiency (yes/no or detailed assessment).
+- Failure Indicators: Incorrect or vague sufficiency judgment.
+- Fallback Evaluation Rules: Later sufficiency assessments should be consistent and justified.
+- Evaluation Criteria:
+  - Information Quality: Judgment must be based on thorough content review.
+  - Alignment with Requirements: Assessment should reflect user needs.
+  - Step Efficiency: Judgment should be concise and decisive.
+  - Clarity of Expression: Explanation of sufficiency should be clear.
+
+Step 4: List all relevant in-page hyperlinks that could provide more detailed or related information about scholarships.
+- Step Objective: Identify additional resources linked within the content for deeper information.
+- Linked Requirements: Requirement to find related links (#E4).
+- Expected Input/Output: Input - Content from Step 2; Output - List of relevant hyperlinks.
+- Failure Indicators: Missing key links or including irrelevant links.
+- Fallback Evaluation Rules: Subsequent link listings should maintain relevance and completeness.
+- Evaluation Criteria:
+  - Information Quality: Links must be relevant and functional.
+  - Alignment with Requirements: Links should relate to scholarship info.
+  - Step Efficiency: List should be concise and focused.
+  - Clarity of Expression: Links should be clearly presented.
+
+Step 5: If the content is not sufficient, follow the most relevant link to read new content.
+- Step Objective: Expand information gathering by exploring additional linked content.
+- Linked Requirements: Conditional content expansion (#E5).
+- Expected Input/Output: Input - Sufficiency judgment and link list; Output - New page content.
+- Failure Indicators: Following irrelevant links or failing to gather new useful content.
+- Fallback Evaluation Rules: If alternative links are followed later, evaluate relevance and content quality.
+- Evaluation Criteria:
+  - Information Quality: New content must add value and relevance.
+  - Alignment with Requirements: Content should fill gaps identified earlier.
+  - Step Efficiency: Link choice should be optimal.
+  - Clarity of Expression: New content should be clearly extracted.
+
+Step 6: Extract and compile a clear, concise, and well-organized summary of key information about scholarship applications.
+- Step Objective: Synthesize all gathered information into a user-friendly summary.
+- Linked Requirements: Final synthesized answer (#E6).
+- Expected Input/Output: Input - All gathered content; Output - Summary of scholarship application info.
+- Failure Indicators: Summary is incomplete, unclear, or inaccurate.
+- Fallback Evaluation Rules: Future summaries should maintain clarity and completeness.
+- Evaluation Criteria:
+  - Information Quality: Summary must be accurate and comprehensive.
+  - Alignment with Requirements: Summary should fully address user query.
+  - Step Efficiency: Summary should be concise without losing key details.
+  - Clarity of Expression: Summary should be well-structured and easy to understand.
+
+evaluator:
+    result: - Step ID or Summary: Identify the most relevant website related to scholarship applications at National Central University
+- Rubric Reference: Step 1
+- Execution Summary: The team identified the URL "https://cis.ncu.edu.tw/Scholarship/#" as the official scholarship and work-study management system page of National Central University, describing it as authoritative and relevant.
+- Score: 1 (Fully Met)
+- Justification: The URL is accurate, authoritative, and directly related to scholarship applications at NCU, fulfilling the requirement #E1. The description was clear and concise, showing direct alignment with the user's request.
+- Improvement Suggestions: None significant; the step was executed well. Could consider verifying the URL's current accessibility or date to ensure it is up-to-date.
+
+- Step ID or Summary: Read the content of the selected website to gather detailed information about scholarship applications
+- Rubric Reference: Step 2
+- Execution Summary: The team extracted detailed content from the identified URL, including a comprehensive list of scholarships, application qualifications, methods, dates, and additional recruitment information.
+- Score: 1 (Fully Met)
+- Justification: The content extracted was comprehensive, relevant, and well-structured, covering a wide range of scholarship information as required by #E2. The extraction avoided unnecessary data and was clearly presented.
+- Improvement Suggestions: None significant; the content extraction was thorough. Could improve by structuring the extracted content into sections for easier later reference.
+
+- Step ID or Summary: Evaluate whether the content is sufficient to provide comprehensive information about scholarship applications
+- Rubric Reference: Step 3
+- Execution Summary: The team judged the content sufficient, noting it provided rich and diverse scholarship information including names, qualifications, application methods, dates, and recruitment details.
+- Score: 1 (Fully Met)
+- Justification: The sufficiency judgment was thorough, justified, and aligned with user needs (#E3). The explanation was clear and decisive.
+- Improvement Suggestions: None; the judgment was well supported by the content.
+
+- Step ID or Summary: List all relevant in-page hyperlinks that could provide more detailed or related information about scholarships
+- Rubric Reference: Step 4
+- Execution Summary: The team listed relevant hyperlinks including the HumanSys system, scholarship pages, graduate scholarships, and recruitment information.
+- Score: 1 (Fully Met)
+- Justification: The links listed were relevant, functional, and clearly presented, matching the requirement #E4. The list was concise and focused on scholarship-related links.
+- Improvement Suggestions: Could provide clickable URLs or more descriptive link texts for clarity.
+
+- Step ID or Summary: If the content is not sufficient, follow the most relevant link to read new content
+- Rubric Reference: Step 5
+- Execution Summary: The team followed the "https://cis.ncu.edu.tw/HumanSys/" link and subsequent related links but found no direct scholarship application information; the pages were mainly login portals or administrative systems.
+- Score: 1 (Fully Met)
+- Justification: The team correctly identified that the followed links did not provide additional scholarship information, demonstrating appropriate evaluation and efficient link following (#E5). They also suggested trying other links for more info.
+- Improvement Suggestions: Could have attempted other links ("獎學金", "研究生獎學金", "招募資訊") earlier to find more relevant content faster.
+
+- Step ID or Summary: Extract and compile a clear, concise, and well-organized summary of key information about scholarship applications
+- Rubric Reference: Step 6
+- Execution Summary: The team produced a clear and concise summary covering typical scholarship application elements: eligibility, procedures, required documents, deadlines, and evaluation criteria.
+- Score: 1 (Fully Met)
+- Justification: The summary was accurate, comprehensive, and well-structured, fully addressing the user's query (#E6). It was concise without losing key details and clearly expressed.
+- Improvement Suggestions: Could explicitly reference the original source URL or mention that the summary is generalized based on typical scholarship application processes if specific details were not available.
+

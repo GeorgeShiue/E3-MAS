@@ -1,0 +1,15 @@
+Execution Team Result: I have gathered comprehensive information regarding scholarship applications at National Central University. The official graduate scholarship page provides detailed guidance on:
+
+- Application eligibility and conditions
+- Different types of scholarships and assistance programs available
+- Application procedures and required documents
+- Academic performance requirements
+- Special criteria for specific groups such as part-time students and mainland Chinese students
+- Frequently Asked Questions (FAQs) addressing common concerns
+- System operation instructions for online application
+- Contact information for further inquiries
+
+If you would like, I can help explain any specific scholarship type, clarify application steps, or provide contact details to assist you further. Just let me know what you need!
+Execution Team Run Time: 54.59 seconds
+Scores: [1.0, 1.0, 1.0, 0.5, 1.0, 0.5]
+Progress Rate: 0.83

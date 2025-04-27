@@ -26,17 +26,11 @@ EXECUTION_CHAT_LOG_FILEPATH = "Outputs/execution_chat_log.txt"
 EVALUATION_CHAT_LOG_FILEPATH = "Outputs/evaluation_chat_log.txt"
 
 agent_parameter_yaml_path = "agent_parameter_base.yaml"
-# executor_name = ""
 
 def set_agent_parameter_yaml_path(path):
     """Set the path of agent_parameter.yaml file."""
     global agent_parameter_yaml_path
     agent_parameter_yaml_path = path
-
-# def set_executor_name(name):
-#     """Set the name of executor."""
-#     global executor_name
-#     executor_name = name
 
 class WebExecutionTool():
     def __init__(self, user_id = "1130"):

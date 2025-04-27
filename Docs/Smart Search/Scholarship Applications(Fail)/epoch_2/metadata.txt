@@ -1,0 +1,29 @@
+Execution Team Result: The National Central University scholarship page provides comprehensive information about various scholarships available, including their names, amounts, eligibility criteria, and contact details. Here is a clear summary of the key points related to scholarship applications:
+
+1. **Types of Scholarships**:  
+   - Various scholarships for undergraduate and graduate students, such as:  
+     - 罗家伦校长纪念奖学金 (up to NT$100,000) for financially needy outstanding students  
+     - 朱顺一合勤奖学金 for academically or athletically excellent students  
+     - 蔡力行先生奖学金 supporting outstanding leadership and study abroad  
+     - Other scholarships targeted at indigenous students, low-income families, special circumstances, and academic excellence.
+
+2. **Award Amounts and Quotas**:  
+   - Scholarships range from NT$3,000 to over NT$300,000 depending on type.  
+   - Quotas vary from a few recipients to dozens per award.
+
+3. **Eligibility**:  
+   - Most scholarships require good academic standing (often year 2 or above), financial need, or special qualifications such as leadership or service activities.  
+   - Some are restricted by department, region, or student background (e.g., indigenous students, low-income families).
+
+4. **Application and Selection**:  
+   - Application procedures typically involve submitting forms, academic records, and sometimes self-study plans or participation in school activities (e.g., 安心學習助學金 requires a learning plan and counseling sessions).  
+   - Some scholarships are awarded periodically (per semester or year).
+
+5. **Contact Information**:  
+   - Student Affairs Office: (03)4227151 ext. 57212 or 57220-57224  
+   - Campus security hotline and additional contact details are also provided.
+
+If you would like, I can help you with specifics on how to apply, deadlines, or details on a particular scholarship. Just let me know!
+Execution Team Run Time: 74.05 seconds
+Scores: [1.0, 1.0, 1.0, 0.0, 0.0, 0.5]
+Progress Rate: 0.58

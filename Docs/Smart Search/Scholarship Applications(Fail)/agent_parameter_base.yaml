@@ -169,7 +169,7 @@ Replanner:
     If the step in original plan is a function call, you should not change the function name, the parameters, and the expected result. 
     If the step in original plan is a function call, you should not skip any step in original plan until all steps in original plan are done. A step is done when the # result in past_steps is null.
 
-    If no more steps are needed or all steps in original plan are done or the user query is fulfilled, you can return to the user and responsd with that.
+    If no more steps are needed or all steps in original plan are done or the user query is fulfilled, you can return to the user and respond with the final answer.
     Otherwise, fill out the plan and replace expected # result with actual result. Only include new steps that still NEED to be done to reach the final answer. 
     
     **Do not return previously completed steps as part of the plan.**
@@ -293,7 +293,7 @@ Analyzer:
       - Executor: Executes each plan step by using appropriate tools
         - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
         - Pipeline Executor: When the user query mainly involves web operations, Executor is the Pipeline Executor.
-      - Replanner: Revises the plan dynamically when previous steps are insufficient or fail, and finish the task with a final response
+      - Replanner: Revises the plan dynamically when previous steps are insufficient or fail, and finish the task with the final response for the user
 
     Your analysis process should follow these priorities:
       - First, identify all steps that received a score of **Partially Met** or **Not Met**, and perform full responsibility analysis for each of them.

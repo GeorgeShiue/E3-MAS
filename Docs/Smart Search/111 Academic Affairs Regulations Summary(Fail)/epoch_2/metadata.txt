@@ -1,0 +1,22 @@
+Execution Team Result: The 111 Academic Affairs Regulations of National Central University comprise a comprehensive set of 34 rules covering various aspects of academic administration and student affairs. The main areas include:
+
+- General academic regulations and student course enrollment
+- Policies for inter-school course selection and summer classes
+- Procedures for transferring departments, double majors, and minors
+- Credit programs and mandatory courses requirements
+- Degree examination and continuing education rules for master's and doctoral students
+- Student grading and examination rules
+- Academic ethics and disciplinary actions
+- Withdrawal refund policies and autonomous learning courses
+- Implementation of freshman Chinese and foreign language courses
+- Graduation requirements and required course lists
+- Regulations for studying abroad at partner institutions
+- Procedures for academic record certification
+- Guidelines for autonomous micro-courses and related activities
+
+Overall, these regulations aim to standardize academic conduct and management to ensure smooth academic progress for students.
+
+If you need a detailed explanation on any specific chapter or rule, feel free to ask!
+Execution Team Run Time: 37.59 seconds
+Scores: [1.0, 1.0, 1.0, 1.0]
+Progress Rate: 1.00
