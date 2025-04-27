@@ -15,13 +15,6 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 os.environ["OPENAI_API_KEY"] = api_key
 
-def clear_chat_log(chat_log_path):
-    if os.path.exists(chat_log_path):
-        with open(chat_log_path, "w", encoding='utf-8') as f:
-            f.write("")
-    else:
-        print(f"{chat_log_path} does not exist. Skip clearing chat log.")
-
 def write_chat_log(chat_log_path, content):
     with open(chat_log_path, "a", encoding='utf-8') as f:
         f.write(content)
@@ -65,7 +58,6 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
     if isinstance(graph_class, ExecutionGraph):
         inputs["history"] = [] # TODO 也許可以在此幫 Execution Team 加入歷史紀錄(?
 
-    # clear_chat_log(chat_log_path)
     write_chat_log(chat_log_path, f"User Query:\n   {inputs['input']}\n\n")
 
     # *若是 Execution Team 的 Pipeline Executor，則等待瀏覽器初始化
@@ -100,6 +92,8 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
 def run_app(user_query, executor_name, task, epoch):
     # input(f"Press Enter to start initializing environment and Execution Team for {task} in epoch {epoch}...")
     # print(f"Initializing environment and Execution Team for {task} in epoch {epoch}\n")
+    
+    start_time = time.time() # *計算初始化時間
 
     execution_graph = ExecutionGraph(executor_name) # *每次迭代皆須初始化 Execution Team
 
@@ -122,10 +116,13 @@ def run_app(user_query, executor_name, task, epoch):
         shutil.rmtree(epoch_folder_path)
         print(f"Reset {epoch_folder_path}.")
     os.makedirs(epoch_folder_path, exist_ok=True)
-    print(f"Set folder path to: {epoch_folder_path}")    
+    print(f"Set folder path to: {epoch_folder_path}")
 
     # *將上個版本的 agent_parameter.yaml 複製到 epoch 資料夾內
     if epoch == 1:
+        if os.path.exists(os.path.join(task_folder_path, "agent_parameter_base.yaml")):
+            os.remove(os.path.join(task_folder_path, "agent_parameter_base.yaml"))
+        shutil.copy("agent_parameter_base.yaml", os.path.join(task_folder_path, "agent_parameter_base.yaml")) # epoch 1 時複製一份屬於此任務的 agent_parameter_base.yaml
         shutil.copy("agent_parameter_base.yaml", agent_parameter_yaml_path)
     else:
         shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
@@ -139,8 +136,13 @@ def run_app(user_query, executor_name, task, epoch):
         
         execution_graph.wait_browser_init()
 
+    print()
+
+    end_time = time.time()
+    print("Initialization time: ", end_time - start_time, " seconds")
+
     # *啟動 Dynamic MAS
-    print(f"\nEnvironment and Execution Team for {task} in epoch {epoch} are initialized")
+    print(f"Environment and Execution Team for {task} in epoch {epoch} are initialized")
     command = input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
     
     if command.lower() == "exit":
@@ -157,7 +159,7 @@ def run_app(user_query, executor_name, task, epoch):
     else:
         print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
 
-    start_time = time.time()
+    start_time = time.time() # *計算執行時間
 
     loop = asyncio.new_event_loop()
     loop.run_until_complete(run_graph_with_graph_class(execution_graph, user_query, execution_chat_log_path)) # *Test Execution Team
@@ -181,10 +183,10 @@ evolution_graph = EvolutionGraph()
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-user_query = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button." # *給 Execution Team 的使用者輸入
-task = "Leave Application" # *記錄檔資料夾名稱
-executor_name = "Pipeline Executor" # *"Search Executor" or "Pipeline Executor"
-max_epoch = 5
+user_query = "Who is the headmaster of National Central University in Taiwan?" # *給 Execution Team 的使用者輸入
+task = "Headmaster Name" # *記錄檔資料夾名稱
+executor_name = "Search Executor" # *"Search Executor" or "Pipeline Executor"
+max_epoch = 50
 exit = False
 
 print(f"""

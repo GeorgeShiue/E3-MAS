@@ -97,7 +97,7 @@ class ExecutionGraph():
 
         graph = clean_graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
         # GraphFactory.save_graph_mermaid(graph, "Execution Graph") # 測試GraphFactory的save_graph_mermaid功能
-        print("Execution Graph is created.\n")
+        print("Execution Graph is created.")
 
         return graph
     
@@ -150,7 +150,7 @@ class EvaluationGraph():
 
         graph = clean_graph.compile() # This compiles it into a LangChain Runnable, meaning you can use it as you would any other runnable
         # GraphFactory.save_graph_mermaid(graph, "Evaluation Graph") # 測試GraphFactory的save_graph_mermaid功能
-        print("Evaluation Graph is created.\n")
+        print("Evaluation Graph is created.")
         
         return graph
     
@@ -192,7 +192,7 @@ class EvolutionGraph():
 
         graph = clean_graph.compile()
         # GraphFactory.save_graph_mermaid(graph, "Evolution Graph") # 測試GraphFactory的save_graph_mermaid功能
-        print("Evolution Graph is created.\n")
+        print("Evolution Graph is created.")
 
         return graph
     
