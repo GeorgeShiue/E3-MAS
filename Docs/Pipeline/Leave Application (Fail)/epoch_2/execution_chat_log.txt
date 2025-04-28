@@ -1,0 +1,11 @@
+User Query:
+   
+Please help me apply leave application.
+Start Date is 2025/4/29 and End Date is 2025/4/30.
+I want to apply 事假 because I have to 回家.
+My leave certificate is in the path C:\Users\George\Desktop\專題Program\專題\Docs\leave_reason.png.
+
+
+Planner:
+    plan: ['Navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest to access the leave application system. #E1', "Input the user's account into the field labeled 'Account'. #E2", "Input the user's password into the field labeled 'Password'. #E3", "Click the button with the text 'Login to Portal' to log in. #E4", "Click the button with the text 'Go to' to proceed to the leave application section. #E5", "Click the button with the text '申請' to start a new leave application. #E6", "Click the checkbox with label '本人已詳讀並充分了解 ' to confirm understanding. #E7", "Click the button with text '送出' to proceed. #E8", "Click the input with id 'start_date' to select the start date. #E9", "Click the date 'April 29, 2025' in the 1st calendar to set the start date. #E10", "Click the input with id 'end_date' to select the end date. #E11", "Click the date 'April 30, 2025' in the 2nd calendar to set the end date. #E12", "Select the dropdown option '事假' to specify the leave type. #E13", "Click the input with value '送出' to proceed. #E14", "Input '回家' into the input with name 'leave_reason' to specify the leave reason. #E15", "Upload the file from path 'C:\\Users\\George\\Desktop\\專題Program\\專題\\Docs\\leave_reason.png' with id 'confirm_file' as the leave certificate. #E16", "Click the input with id 'is_check' to confirm the application. #E17", "Click the input with value '暫存' to save the leave application temporarily. #E18"]
+

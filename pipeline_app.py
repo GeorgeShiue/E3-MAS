@@ -189,7 +189,12 @@ evolution_graph = EvolutionGraph()
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
 # Please help me perform a series of operation to apply leave application. You can stop at fininsh Click the input '送出'
-user_query = "Please help me perform a series of operation to apply leave application." # *給 Execution Team 的使用者輸入
+user_query = """
+Please help me apply leave application.
+Start Date is 2025/4/29 and End Date is 2025/4/30.
+I want to apply 事假 because I have to 回家.
+My leave certificate is in the path C:\\Users\\George\\Desktop\\專題Program\\專題\\Docs\\leave_reason.png.
+""" # *給 Execution Team 的使用者輸入
 task = "Leave Application" # *記錄檔資料夾名稱
 executor_name = "Pipeline Executor" # *"Search Executor" or "Pipeline Executor"
 max_epoch = 50

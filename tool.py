@@ -57,6 +57,8 @@ class WebExecutionTool():
                 # self.selenium_controller.screen_shot(self.current_user_id, self.current_screenshot_name)
                 # return result
                 screen_shot()
+
+                return result
             return wrapper
 
         def screen_shot() -> str:
@@ -499,5 +501,10 @@ if __name__ == "__main__":
     # result = read_execution_chat_log.invoke(input=None)
     # print(result)
 
-    website_links_crawler.invoke("http://www.ncu.edu.tw")
-    website_links_crawler.invoke("https://pdc.adm.ncu.edu.tw")
+    # website_links_crawler.invoke("http://www.ncu.edu.tw")
+    # website_links_crawler.invoke("https://pdc.adm.ncu.edu.tw")
+
+    web_execution_tool = WebExecutionTool()
+    web_execution_tool.create_browser()
+    result = web_execution_tool.tool_dict["navigate_with_url"].invoke("https://pdc.adm.ncu.edu.tw")
+    print(result)
