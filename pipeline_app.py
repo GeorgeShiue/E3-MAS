@@ -56,7 +56,7 @@ def compute_progress_rate(x: List[float]) -> float:
     return max_progress
 
 async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, EvaluationGraph], user_query, chat_log_path, meta_data_path=None):
-    config = {"recursion_limit": 30}
+    config = {"recursion_limit": 50}
     inputs = {
         "input": user_query,
     }
@@ -66,8 +66,8 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
         inputs["history"] = [] # TODO 也許可以在此幫 Execution Team 加入歷史紀錄(?
 
     # *若是 Execution Team 的 Pipeline Executor，則等待瀏覽器初始化
-    if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
-        graph_class.wait_browser_init()
+    # if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
+    #     graph_class.wait_browser_init()
 
     start_time = time.time() # 計算執行時間
     execution_result = ""
@@ -96,7 +96,7 @@ async def run_graph_with_graph_class(graph_class: Union[ExecutionGraph, Evaluati
             write_execution_result_time(meta_data_path, execution_result, end_time - start_time)
     except GraphRecursionError as e:
         print(f"GraphRecursionError: {e}")
-        write_chat_log(chat_log_path, f"Reach maximum recursion limit. Task failed.\n")
+        write_chat_log(chat_log_path, f"Reach maximum recursion limit. Abort Execution.\n")
 
     # * 測試 Execution Team 的 Pipeline Executor 時，必須在這裡清除selenium controller的container
     if isinstance(graph_class, ExecutionGraph) and graph_class.agent.executor_name == "Pipeline Executor":
@@ -138,7 +138,7 @@ def run_app(user_query, executor_name, task, epoch):
         shutil.copy(os.path.join(task_folder_path, f"epoch_{epoch-1}", "agent_parameter.yaml"), agent_parameter_yaml_path)
     set_agent_parameter_yaml_path(agent_parameter_yaml_path)
 
-    # *若是 Execution Team 的 Pipeline Executor，設定截圖資料夾路徑並等待瀏覽器初始化
+    # *若是 Execution Team 的 Pipeline Executor，設定截圖資料夾路徑
     if executor_name == "Pipeline Executor":
         screenshot_folder_path = os.path.join(epoch_folder_path, "screenshot")
         os.makedirs(screenshot_folder_path, exist_ok=True)
@@ -151,9 +151,9 @@ def run_app(user_query, executor_name, task, epoch):
     end_time = time.time()
     print("Initialization time: ", end_time - start_time, " seconds")
 
-    # *啟動 Dynamic MAS
+    # *啟動 E3-MAS
     print(f"Environment and Execution Team for {task} in epoch {epoch} are initialized")
-    command = input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
+    command = input(f"Press Enter to start running E3-MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
     
     if command.lower() == "exit":
         shutil.rmtree(epoch_folder_path)
@@ -164,10 +164,10 @@ def run_app(user_query, executor_name, task, epoch):
         global exit
         exit = True
 
-        print(f"End Dynamic MAS for {task} after complete epoch {epoch - 1}.")
+        print(f"End E3-MAS for {task} after complete epoch {epoch - 1}.")
         return
     else:
-        print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
+        print(f"E3-MAS for {task} in epoch {epoch} start running.\n")
 
     start_time = time.time() # 計算總執行時間
 
@@ -179,7 +179,7 @@ def run_app(user_query, executor_name, task, epoch):
 
     end_time = time.time()
 
-    print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
+    print(f"\nE3-MAS run time: {end_time - start_time} seconds")
 
 evaluation_graph = EvaluationGraph()
 evolution_graph = EvolutionGraph()
@@ -188,8 +188,8 @@ evolution_graph = EvolutionGraph()
 # Who is the headmaster of National Central University in Taiwan?
 # Summarize the content of the 111 Academic Affairs Regulations.
 # Please help me gather information related to scholarship applications.
-# Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button.
-user_query = "Please help me perform a series of operation to apply leave application. You can stop at fininsh click '申請' button." # *給 Execution Team 的使用者輸入
+# Please help me perform a series of operation to apply leave application. You can stop at fininsh Click the input '送出'
+user_query = "Please help me perform a series of operation to apply leave application." # *給 Execution Team 的使用者輸入
 task = "Leave Application" # *記錄檔資料夾名稱
 executor_name = "Pipeline Executor" # *"Search Executor" or "Pipeline Executor"
 max_epoch = 50
@@ -203,7 +203,7 @@ Please confirm following parameters:
     Max Epoch: {max_epoch}
 """)
 
-command = input("Press Enter to start running Dynamic MAS, or type 'exit' to exit: ")
+command = input("Press Enter to start running E3-MAS, or type 'exit' to exit: ")
 if command.lower() == "exit":
     sys.exit(0)
 else:
@@ -221,9 +221,9 @@ else:
 
     evolution_graph.set_executor_name(executor_name)
 
-    print(f"Dynamic MAS start running.\n")
+    print(f"E3-MAS start running.\n")
 
-    # *測試 Dynamic MAS 多次迭代
+    # *測試 E3-MAS 多次迭代
     for epoch in range(max_epoch):
         run_app(user_query, executor_name, task, epoch + 1)
 

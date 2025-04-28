@@ -151,9 +151,9 @@ def run_app(user_query, executor_name, task, epoch):
     end_time = time.time()
     print("Initialization time: ", end_time - start_time, " seconds")
 
-    # *啟動 Dynamic MAS
+    # *啟動 E3-MAS
     print(f"Environment and Execution Team for {task} in epoch {epoch} are initialized")
-    command = input(f"Press Enter to start running Dynamic MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
+    command = input(f"Press Enter to start running E3-MAS for {task} in epoch {epoch}, or type 'exit' to exit: ")
     
     if command.lower() == "exit":
         shutil.rmtree(epoch_folder_path)
@@ -164,10 +164,10 @@ def run_app(user_query, executor_name, task, epoch):
         global exit
         exit = True
 
-        print(f"End Dynamic MAS for {task} after complete epoch {epoch - 1}.")
+        print(f"End E3-MAS for {task} after complete epoch {epoch - 1}.")
         return
     else:
-        print(f"Dynamic MAS for {task} in epoch {epoch} start running.\n")
+        print(f"E3-MAS for {task} in epoch {epoch} start running.\n")
 
     start_time = time.time() # 計算總執行時間
 
@@ -179,7 +179,7 @@ def run_app(user_query, executor_name, task, epoch):
 
     end_time = time.time()
 
-    print(f"\nDynamic MAS run time: {end_time - start_time} seconds")
+    print(f"\nE3-MAS run time: {end_time - start_time} seconds")
 
 evaluation_graph = EvaluationGraph()
 evolution_graph = EvolutionGraph()
@@ -203,7 +203,7 @@ Please confirm following parameters:
     Max Epoch: {max_epoch}
 """)
 
-command = input("Press Enter to start running Dynamic MAS, or type 'exit' to exit: ")
+command = input("Press Enter to start running E3-MAS, or type 'exit' to exit: ")
 if command.lower() == "exit":
     sys.exit(0)
 else:
@@ -221,9 +221,9 @@ else:
 
     evolution_graph.set_executor_name(executor_name)
 
-    print(f"Dynamic MAS start running.\n")
+    print(f"E3-MAS start running.\n")
 
-    # *測試 Dynamic MAS 多次迭代
+    # *測試 E3-MAS 多次迭代
     for epoch in range(max_epoch):
         run_app(user_query, executor_name, task, epoch + 1)
 

@@ -32,11 +32,23 @@ Planner:
     ---  
     **If #E0 == "system operation"**, a typical plan (e.g. full plan of leave application) may include:
       Step 1. navigate to https://cis.ncu.edu.tw/iNCU/stdAffair/leaveRequest #E1 = [Output of the tool]
-      Step 2. Input the user's account information into the field labeled 'Account' #E2 = [Output of the tool]
+      Step 2. Input the user's account into the field labeled 'Account' #E2 = [Output of the tool]
       Step 3. Input the user's password into the field labeled 'Password' #E3 = [Output of the tool]
       Step 4. Click the button with the text 'Login to Portal' #E4 = [Output of the tool]
       Step 5. Click the button with the text 'Go to' #E5 = [Output of the tool]
       Step 6. Click the button with the text '申請' #E6 = [Output of the tool]
+      Step 7. Click the checkbox with label '本人已詳讀並充分了解 ' #E7 = [Output of the tool]
+      Step 8. Click the button with text '送出' #E8 = [Output of the tool]
+      Step 9. Click the input with id 'start_date' #E9 = [Output of the tool]
+      Step 10. Click the date 'April 29, 2025' in the 1st calendar #E10 = [Output of the tool]
+      Step 11. Click the input with id 'end_date' #E11 = [Output of the tool]
+      Step 12. Click the date 'April 30, 2025' in the 2nd calendar #E12 = [Output of the tool]
+      Step 13. Select the dropdown option '病假' #E13 = [Output of the tool]
+      Step 14. Click the input with value '送出' #E14 = [Output of the tool]
+      Step 15. Input '感冒' into the input with name 'leave_reason' #E15 = [Output of the tool]
+      Step 16. Upload the file 'C:\Users\George\Desktop\專題Program\專題\Docs\leave_reason_certificate.png' with id 'confirm_file' #E16 = [Output of the tool]
+      Step 17. Click the input with id 'is_check' #E17 = [Output of the tool]
+      Step 18. Click the input with value '暫存' #E18 = [Output of the tool]
 
       Notice: 
         You should not change the order, the content, and the expect result of the steps in the above plan.
@@ -121,13 +133,15 @@ Pipeline Executor:
     Execution Rules:
       1. Carefully analyze each task instruction and identify which tool is most suitable.
       2. Use only the tool necessary to fulfill the specific action.
-      3. For any instruction that involves clicking, or inputting, you must first read the HTML of the current webpage using the get_html_content tool. This is a mandatory prerequisite before taking any further action on that page.
+      3. When you input privacy information, you need to set privacy parameter, and you don't need to request the user for information.
       4. Execute one instruction at a time and return the result in a format that other agents can understand.
       5. Preserve variable naming (e.g., #E1, #E2) to help with chaining between steps.
       6. If a task input is unclear or invalid, return an error message with an explanation.
-
+     
     Based on the tool's output, generate the response that best meets the objective of current plan step.
     If the tool's output includes an success message or error message, you should return the message as the output of the step.
+
+# 3. For any instruction that involves clicking, or inputting, you must first read the HTML of the current webpage using the get_html_content tool. This is a mandatory prerequisite before taking any further action on that page.
 
   tool_list:
     - navigate_with_url
@@ -169,7 +183,7 @@ Replanner:
     If the step in original plan is a function call, you should not change the function name, the parameters, and the expected result. 
     If the step in original plan is a function call, you should not skip any step in original plan until all steps in original plan are done. A step is done when the # result in past_steps is null.
 
-    If no more steps are needed or all steps in original plan are done and you can return to the user, then respond with that. 
+    If no more steps are needed or all steps in original plan are done or the user query is fulfilled, you can return to the user and responsd with that.
     Otherwise, fill out the plan and replace expected # result with actual result. Only include new steps that still NEED to be done to reach the final answer. 
     
     **Do not return previously completed steps as part of the plan.**
@@ -293,14 +307,14 @@ Analyzer:
       - Executor: Executes each plan step by using appropriate tools
         - Search Executor: When the user query mainly involves information retrieval, Executor is the Search Executor.
         - Pipeline Executor: When the user query mainly involves web operations, Executor is the Pipeline Executor.
-      - Replanner: Revises the plan dynamically when previous steps are insufficient or fail
+      - Replanner: Revises the plan dynamically when previous steps are insufficient or fail, and finish the task with a final response
 
     Your analysis process should follow these priorities:
       - First, identify all steps that received a score of **Partially Met** or **Not Met**, and perform full responsibility analysis for each of them.
       - If all steps are scored as **Fully Met**, then examine the Improvement Suggestions for each step and determine if any step still shows clear room for improvement, in which case that step should also be analyzed and responsibility attributed accordingly
 
     For each selected step to analyze, do the following:
-      1. Summarize what went wrong, based on the evaluation report
+      1. Summarize what went wrong, based on the evaluation report and responsibility of each agent
       2. Identify the most responsible agent (Planner, Search Executor/Pipeline Executor, or Replanner), based on who influenced that step the most
       3. Explain why this agent is responsible, justify your choice based on step responsibilities
       4. Suggest what that agent could improve to avoid similar issues in the future

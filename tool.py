@@ -88,6 +88,7 @@ class WebExecutionTool():
             When using this tool to input privacy information such as account or password, the privacy parameter should be set to "Account" or "Password".
             This tool wiill replace the input_text argument with the external information when the privacy parameter is not "None".
             """
+            print("label_text: ", label_text, "input_text: ", input_text, "privacy: ", privacy)
             if privacy == "Account":
                 input_text = self.privacy_info[self.current_user_id]["account"]
             if privacy == "Password":
@@ -103,6 +104,7 @@ class WebExecutionTool():
             When using this tool to input privacy information such as account or password, the privacy parameter should be set to "Account" or "Password".
             This tool will replace the input_text argument with the external information when the privacy parameter is not "None".
             """
+            print("name:", name, "input_text: ", input_text, "privacy: ", privacy)
             if privacy == "Account":
                 input_text = self.privacy_info[self.current_user_id]["account"]
             if privacy == "Password":
@@ -139,7 +141,7 @@ class WebExecutionTool():
         def click_input_with_id(id: str) -> str:
             """
             Clicks the input specified by the id.
-            Use case: clicking the input box without label.
+            Use case: clicking the input box without id.
             """
             result = self.selenium_controller.click_input_with_id(self.current_user_id, id)
             return result
@@ -147,7 +149,7 @@ class WebExecutionTool():
         @tool
         @auto_screenshot
         def select_dropdown_option(option_text: str) -> str:
-            """Selects the dropdown option specified by specified option text."""
+            """Selects the dropdown option specified by option text."""
             result = self.selenium_controller.select_dropdown_option(self.current_user_id, option_text)
             return result
 
@@ -156,8 +158,8 @@ class WebExecutionTool():
         def click_span_with_aria_label(aria_label: str, index: str = "1") -> str:
             """
             Clicks the span specified by the Aria Label.
-            Use case: clicking date inside the calendar.
-            index: the index of the span element to click, set index value based on user's instruction such as "第{index}個".
+            Use case: clicking date inside the calendar. Aria label is the date.
+            index: the index of the span element to click, set index value based on the instruction. Span element is the calendar.
             """
             result = self.selenium_controller.click_span_with_aria_label(self.current_user_id, aria_label, int(index))
             return result

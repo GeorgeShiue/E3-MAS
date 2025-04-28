@@ -284,10 +284,10 @@ class SeleniumController:
             print("spans: ", len(spans))
             spans[index-1].click()
         except:
-            print(f"Failed to click span with Aria Label {aria_label} for user_id {user_id}")
-            return f"Failed to click span with Aria Label {aria_label} for user_id {user_id}"
-        print(f"Clicked span with Aria Label {aria_label}  for user_id {user_id}")
-        return f"Clicked span with Aria Label {aria_label}  for user_id {user_id}"
+            print(f"Failed to click span with Aria Label {aria_label} of span element {index} for user_id {user_id}")
+            return f"Failed to click span with Aria Label {aria_label} of span element {index} for user_id {user_id}"
+        print(f"Clicked span with Aria Label {aria_label} of span element {index} for user_id {user_id}")
+        return f"Clicked span with Aria Label {aria_label} of span element {index} for user_id {user_id}"
 
     def click_element(self, user_id, xpath):
         """
