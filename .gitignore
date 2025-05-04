@@ -1,4 +1,5 @@
 .env
+.gradio
 __pycache__
 Dataset
 Outputs
