@@ -111,6 +111,9 @@ class ExecutionGraph():
             self.agent.create_browser_thread.join()
         print("browser is ready")
 
+    def get_current_screenshot_name(self):
+        return self.agent.tool.current_screenshot_name
+
 class EvaluationGraph():
     class Evaluation(TypedDict):
         input: str

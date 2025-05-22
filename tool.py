@@ -52,10 +52,6 @@ class WebExecutionTool():
                 # 執行原始函數
                 result = func(*args, **kwargs)
                 time.sleep(0.5)
-                # self.current_screenshot_count += 1
-                # self.current_screenshot_name = f"website_screenshot_{self.current_screenshot_count}"
-                # self.selenium_controller.screen_shot(self.current_user_id, self.current_screenshot_name)
-                # return result
                 screen_shot()
 
                 return result
