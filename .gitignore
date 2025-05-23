@@ -1,6 +1,8 @@
 .env
+.gradio
 __pycache__
 Dataset
 Outputs
 App Outputs
 screenshots
+test.py
